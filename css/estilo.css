@@ -81,7 +81,7 @@ input[type="checkbox"] {
     position: fixed;
     top: 80px;
     left: -100%;
-    background: #111;
+    background: #16a8e2;
     height: 100vh;
     width: 100%;
     text-align: center;
@@ -113,7 +113,7 @@ input[type="checkbox"] {
   nav ul li a.active,
   nav ul li a:hover {
     background: none;
-    color: cyan;
+    color: yellow;
   }
 }
 
