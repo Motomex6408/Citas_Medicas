@@ -17,9 +17,8 @@
          <i class="fas fa-bars"></i>
          </label>
          <ul>
-            <li><a href="nosotros.php">Nosotros</a></li>
+            <li><a href="index.php">Inicio</a></li>
             <li><a href="especialidades.php">Especialidades</a></li>
-            <li><a href="contacto.php">Contacto</a></li>
             <li><a class="active" href="../login/login.php">Iniciar sesión</a></li>
          </ul>
       </nav>
