@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediCitas - Citas Médicas</title>
-    <link rel="stylesheet" href="../css/index.css"> 
+    <link rel="stylesheet" href="../css/estilo.css"> 
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -41,7 +41,7 @@
         <p>Lunes a Viernes: 8:00 AM - 6:00 PM</p>
         <p>Sábados: 8:00 AM - 2:00 PM</p>
         <p>Domingos: Cerrado</p>
-        <a href="reserva.php" class="btn-reservar">
+        <a href="../Pacientes/Reserva.php" class="btn-reservar">
             <i class="fas fa-calendar-check"></i> Reservar Cita Online
         </a>
     </section>
@@ -50,7 +50,7 @@
     <h2>Contáctanos</h2>
     <p>Ubicación: Santa Bárbara, Honduras</p>
     <p>Contáctanos Por WhatsApp:</p>
-    <a href="https://wa.me/1234567890" target="_blank" class="btn-whatsapp">
+    <a href="https://wa.me/+50495629127" target="_blank" class="btn-whatsapp">
         <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
     </a>
 </section>

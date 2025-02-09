@@ -1,22 +1,37 @@
-<?php 
-    include '../../conexion.php';
+<?php
+include '../../conexion.php';
+session_start();
 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usuario = $_POST['usuario'];
     $password = $_POST['password'];
 
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $consulta = "SELECT 1 FROM Usuarios WHERE nombre = ? AND contrasenia = ?";
-        $stmt = $conn->prepare($consulta);
-        $stmt->execute([$usuario, $password]);
-        $user = $stmt->fetch();
+    if (empty($usuario) || empty($password)) {
+        $_SESSION['error'] = "Complete los campos obligatorios";
+        header('Location: ../login.php');
+        exit();
+    }
 
-        session_start();
-        if ($user) {
-            $_SESSION['usuario'] = $usuario;
-            header('Location: ../../admin/index.php');
+    try {
+        $consulta = "SELECT * FROM Usuarios WHERE usuario = ?";
+        $statement = $conn->prepare($consulta);
+        $statement->execute([$usuario]);
+        $resultset = $statement->fetch();
+
+        if ($resultset) {
+            if (password_verify($password, $resultset['contrasenia'])) {
+                $_SESSION['usuario'] = $usuario;
+                header('Location: ../../admin/');
+            } else {
+                $_SESSION['error'] = "Usuario o contraseña incorrectos.";
+                header('Location: ../login.php');
+            }
         } else {
             $_SESSION['error'] = "Usuario o contraseña incorrectos.";
             header('Location: ../login.php');
         }
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Error al iniciar sesión.";
+        header('Location: ../login.php');
     }
-?>
+}
