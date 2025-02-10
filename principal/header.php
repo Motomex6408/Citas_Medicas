@@ -18,8 +18,8 @@
          <i class="fas fa-bars"></i>
          </label>
          <ul>
-            <li><a href="index.php">Inicio</a></li>
-            <li><a href="especialidades.php">Especialidades</a></li>
+            <li><a href="../Principal/index.php">Inicio</a></li>
+            <li><a href="../medicos/ListadeCitas.php">Especialidades</a></li>
             <li><a class="active" href="../login/login.php">Iniciar sesión</a></li>
          </ul>
       </nav>

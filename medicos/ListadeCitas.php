@@ -20,7 +20,7 @@
          </label>
          <ul class="menu">
          <ul>
-            <li><a class="active" href="../medicos/header.php">Salir</a></li>
+            <li><a class="active" href="index.php">Salir</a></li>
          </ul>
       </nav>
 

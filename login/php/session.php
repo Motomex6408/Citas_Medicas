@@ -16,12 +16,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $consulta = "SELECT * FROM Usuarios WHERE usuario = ?";
         $statement = $conn->prepare($consulta);
         $statement->execute([$usuario]);
-        $resultset = $statement->fetch();
+        $resultset = $statement->fetch(PDO::FETCH_ASSOC);
 
         if ($resultset) {
             if (password_verify($password, $resultset['contrasenia'])) {
-                $_SESSION['usuario'] = $usuario;
-                header('Location: ../../admin/');
+                $_SESSION['usuario'] = [
+                    'usuario' => $usuario,
+                    'nombre' => $resultset['nombre'],
+                    'apellido' => $resultset['apellido']
+                ];
+                
+                header('Location: ../../medicos/index.php');
             } else {
                 $_SESSION['error'] = "Usuario o contraseña incorrectos.";
                 header('Location: ../login.php');

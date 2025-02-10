@@ -2,10 +2,6 @@
 // Ajusta la ruta según la ubicación real del archivo
 include '../conexion.php';
 
-// Instanciar la clase y obtener la conexión PDO
-$conexionObj = new Conexion();
-$conn = $conexionObj->ConexionBD();
-
 if (!$conn) {
     die("Error: No se pudo conectar a la base de datos.");
 }

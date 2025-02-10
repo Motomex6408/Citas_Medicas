@@ -56,21 +56,21 @@
 
         <div class="form-doctor">
             <label for="idespecialidad">Especialidad</label>
-            <select id="idespecialidad" name="idespecialidad">
-                <option value="0">Seleccionar</option>
-                <?php
+                <select id="idespecialidad" name="idespecialidad">
+                    <option value="0">Seleccionar</option>
+                    <?php
 
-                include '../conexion.php';
-                $consulta = "SELECT * FROM Especialidades";
-                $statement = $conn->prepare($consulta);
-                $statement->execute();
-                $resultset = $statement->fetchAll();
-                foreach ($resultset as $especialidad) {
-                    $isselected = isset($_SESSION['form_data']['idespecialidad']) && $_SESSION['form_data']['idespecialidad'] == $especialidad['idEspecialidad'] ? 'selected' : '';
-                    echo '<option value="' . $especialidad['idEspecialidad'] . '" ' . $isselected . '>' . $especialidad['nombreEspecialidad'] . '</option>';
-                }
+                    include '../conexion.php';
+                    $consulta = "SELECT * FROM Especialidades";
+                    $statement = $conn->prepare($consulta);
+                    $statement->execute();
+                    $resultset = $statement->fetchAll();
+                    foreach ($resultset as $especialidad) {
+                        $isselected = isset($_SESSION['form_data']['idespecialidad']) && $_SESSION['form_data']['idespecialidad'] == $especialidad['idEspecialidad'] ? 'selected' : '';
+                        echo '<option value="' . $especialidad['idEspecialidad'] . '" ' . $isselected . '>' . $especialidad['nombreEspecialidad'] . '</option>';
+                    }
                 ?>
-            </select>
+            </select>
 
             <label for="licenciaMedica">Nº Licencia Médica</label>
             <input id="licenciaMedica" type="text" name="licenciaMedica" autocomplete="off" value="<?php echo isset($_SESSION['form_data']['licenciaMedica']) ? $_SESSION['form_data']['licenciaMedica'] : ''; ?>">
