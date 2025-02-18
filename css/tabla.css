@@ -1,3 +1,4 @@
+
 body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
@@ -9,7 +10,6 @@ body {
     justify-content: center;
     min-height: 100vh;
 }
-
 
 nav {
     width: 100%;
@@ -59,7 +59,7 @@ nav {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     width: 1200px;
     max-width: 1200px;
-    margin: 85px auto;
+    margin: 20px auto;
     text-align: center;
 }
 
@@ -123,9 +123,68 @@ table tr:hover {
     color: #dc3545;
 }
 
+
+.filter-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.filter-container form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-container input, 
+.filter-container select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.filter-container button {
+    background-color: #0099ff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter-container button:hover {
+    background-color: #0077cc;
+}
+
+
+.export-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn-pdf, .btn-excel, .btn-word {
+    display: inline-block;
+    background-color: #154ce4;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-pdf:hover, .btn-excel:hover, .btn-word:hover {
+    background-color: #9bbdf0;
+}
+
 @media (max-width: 768px) {
     .table-container {
-        padding: 15px;
+        padding: 20px;
     }
 
     table th, table td {
@@ -142,8 +201,86 @@ table tr:hover {
         padding: 6px 10px;
     }
 
-    .salir-btn {
-        padding: 6px 12px;
-        font-size: 12px;
+    .filter-container form {
+        flex-direction: column;
     }
+
+    .filter-container input, 
+    .filter-container select, 
+    .filter-container button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .export-buttons {
+        flex-direction: column;
+    }
+
+    .btn-pdf, .btn-excel, .btn-word {
+        width: 100%;
+        margin-right: 0;
+    }
+.filter-container {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+.filter-container form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-container input, 
+.filter-container select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.filter-container input:focus, 
+.filter-container select:focus {
+    border-color: #0099ff;
+    outline: none;
+}
+
+.filter-container button {
+    background-color: #0099ff;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.filter-container button:hover {
+    background-color: #0077cc;
+}
+
+@media (max-width: 768px) {
+    .filter-container form {
+        flex-direction: column;
+    }
+
+    .filter-container input, 
+    .filter-container select, 
+    .filter-container button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
 }

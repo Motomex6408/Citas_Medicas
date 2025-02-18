@@ -1,28 +1,24 @@
 <?php
-// Ajusta la ruta según la ubicación real del archivo
 include '../conexion.php';
+include '../Principal/header.php';
 
 if (!$conn) {
     die("Error: No se pudo conectar a la base de datos.");
 }
 
-// Procesamiento del formulario de reserva (cuando se envía por POST)
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Recoger datos del formulario
     $idPaciente = trim($_POST['idPaciente']);
     $idMedico   = trim($_POST['idMedico']);
     $fecha      = trim($_POST['fecha']);
     $hora       = trim($_POST['hora']);
     $motivo     = trim($_POST['motivo']);
 
-    // Verificar si ya existe una cita para ese médico, fecha y hora
     $stmt = $conn->prepare("SELECT idCita FROM Citas WHERE idMedico = ? AND fecha = ? AND hora = ?");
     $stmt->execute([$idMedico, $fecha, $hora]);
     
     if ($stmt->fetch()) {
         $mensaje = "La cita ya está reservada en ese horario. Por favor, elija otro horario.";
     } else {
-        // Insertar la nueva cita con estado 'Pendiente'
         $stmt = $conn->prepare("INSERT INTO Citas (idPaciente, idMedico, fecha, hora, motivo, estado)
                                 VALUES (?, ?, ?, ?, ?, 'Pendiente')");
         if ($stmt->execute([$idPaciente, $idMedico, $fecha, $hora, $motivo])) {
@@ -34,73 +30,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 ?>
 
-<!DOCTYPE htm>
-<html lang="en" dir="ltr">
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediCitas - Citas Médicas</title>
     <title>Reservar Cita Médica</title>
     <link rel="stylesheet" href="../css/index.css"> 
     <link rel="stylesheet" href="../css/Reserva.css">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-
 <body>
-<?php include '../Principal/header.php'; ?>
-
-<h1>Reservar Cita Médica</h1>
+    <h1>Reservar Cita Médica</h1>
     
-    <!-- Mostrar mensaje de confirmación o error si existe -->
-    <?php
-    if (isset($mensaje)) {
-        $claseMensaje = strpos($mensaje, 'Error') !== false ? 'error' : 'success';
-        echo "<div class='mensaje $claseMensaje'><strong>$mensaje</strong></div>";
-    }
-    ?>
-
-    <!-- Formulario para seleccionar la fecha -->
+    <?php if (isset($mensaje)) { echo "<div class='mensaje'><strong>$mensaje</strong></div>"; } ?>
+    
     <form method="GET" action="">
-        <label for="fecha">Seleccione la fecha de la cita:</label>
+        <label for="fecha">Seleccione la fecha:</label>
         <input type="date" name="fecha" id="fecha" required>
-        <input type="submit" value="Consultar disponibilidad de horarios">
+        <input type="submit" value="Consultar horarios">
     </form>
     
     <?php
-    // Si se ha seleccionado una fecha, mostrar la disponibilidad
     if (isset($_GET['fecha'])) {
         $fecha = $_GET['fecha'];
         
-        // Obtener el día de la semana en inglés y mapearlo a español
-        $dayOfWeek = date('l', strtotime($fecha));
-        $daysMap = [
-            "Monday"    => "Lunes",
-            "Tuesday"   => "Martes",
-            "Wednesday" => "Miércoles",
-            "Thursday"  => "Jueves",
-            "Friday"    => "Viernes",
-            "Saturday"  => "Sábado",
-            "Sunday"    => "Domingo"
-        ];
-        $diaSemana = isset($daysMap[$dayOfWeek]) ? $daysMap[$dayOfWeek] : $dayOfWeek;
-        
-        // Consulta para obtener los horarios disponibles
-        $sql = "SELECT 
-                    hm.idHorario, 
-                    m.idMedico, 
-                    m.numeroLicenciaMedica, 
-                    e.nombreEspecialidad, 
-                    hm.diaSemana, 
-                    hm.horaInicio, 
-                    hm.horaFin,
-                    u.nombre AS nombreMedico, 
-                    u.correo AS correoMedico
+        $sql = "SELECT hm.idHorario, m.idMedico, e.nombreEspecialidad, hm.diaSemana, hm.horaInicio, hm.horaFin,
+                        u.nombre AS nombreMedico
                 FROM HorariosMedicos hm
                 INNER JOIN Medicos m ON hm.idMedico = m.idMedico
                 INNER JOIN Especialidades e ON m.idEspecialidad = e.idEspecialidad
                 INNER JOIN Usuarios u ON m.idUsuario = u.idUsuario
-                WHERE hm.diaSemana = ?
-                AND NOT EXISTS (
+                WHERE NOT EXISTS (
                     SELECT 1 FROM Citas c
                     WHERE c.idMedico = m.idMedico
                       AND c.fecha = ?
@@ -108,53 +69,63 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 )
                 ORDER BY hm.horaInicio";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$diaSemana, $fecha]);
+        $stmt->execute([$fecha]);
         $horarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         if ($horarios) {
-            echo "<h2>Horarios disponibles para el $fecha ($diaSemana)</h2>";
+            echo "<h2>Horarios disponibles para el $fecha</h2>";
             echo "<table>
                     <tr>
-                        <th>Nombre del Médico</th>
+                        <th>Médico</th>
                         <th>Especialidad</th>
-                        <th>Correo</th>
-                        <th>Hora de Inicio</th>
+                        <th>Hora Inicio</th>
                         <th>Hora Fin</th>
-                        <th>Acción</th>
+                        <th>Reservar</th>
                     </tr>";
             foreach ($horarios as $row) {
-                echo "<tr>";
-                echo "<td>" . htmlspecialchars($row['nombreMedico']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['nombreEspecialidad']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['correoMedico']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['horaInicio']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['horaFin']) . "</td>";
-                echo "<td>
-                        <!-- Formulario para reservar la cita en este horario -->
-                        <form method='POST' action=''>
-                            <!-- En un sistema real, el idPaciente se tomaría de la sesión -->
-                            <label>ID Paciente:</label>
-                            <input type='text' name='idPaciente' required placeholder='Ingrese su ID'>
-                            <input type='hidden' name='idMedico' value='" . $row['idMedico'] . "'>
-                            <input type='hidden' name='fecha' value='" . $fecha . "'>
-                            <input type='hidden' name='hora' value='" . $row['horaInicio'] . "'>
-                            <br>
-                            <label>Motivo de la consulta:</label>
-                            <input type='text' name='motivo' required placeholder='Describa el motivo'>
-                            <br>
-                            <input type='submit' value='Reservar Cita'>
-                        </form>
-                      </td>";
-                echo "</tr>";
+                echo "<tr>
+                        <td>" . htmlspecialchars($row['nombreMedico']) . "</td>
+                        <td>" . htmlspecialchars($row['nombreEspecialidad']) . "</td>
+                        <td>" . htmlspecialchars($row['horaInicio']) . "</td>
+                        <td>" . htmlspecialchars($row['horaFin']) . "</td>
+                        <td>
+                            <button class='reservar' 
+                                    data-medico='" . $row['idMedico'] . "' 
+                                    data-fecha='" . $fecha . "' 
+                                    data-hora='" . $row['horaInicio'] . "'>Reservar</button>
+                        </td>
+                      </tr>";
             }
             echo "</table>";
         } else {
-            echo "<p>No hay horarios disponibles para esa fecha. Por favor, seleccione otra.</p>";
+            echo "<p>No hay horarios disponibles para esa fecha.</p>";
         }
     }
     ?>
 
+    <div id="formularioReserva" style="display:none;">
+        <h2>Confirmar Cita</h2>
+        <form method="POST" action="">
+            <input type="hidden" name="idMedico" id="idMedico">
+            <input type="hidden" name="fecha" id="fechaCita">
+            <input type="hidden" name="hora" id="horaCita">
+            <label>ID Paciente:</label>
+            <input type="text" name="idPaciente" required placeholder="Ingrese su ID">
+            <label>Motivo de la consulta:</label>
+            <input type="text" name="motivo" required placeholder="Describa el motivo">
+            <input type="submit" value="Confirmar Cita">
+        </form>
+    </div>
+    
+    <script>
+    $(document).ready(function() {
+        $('.reservar').click(function() {
+            $('#idMedico').val($(this).data('medico'));
+            $('#fechaCita').val($(this).data('fecha'));
+            $('#horaCita').val($(this).data('hora'));
+            $('#formularioReserva').show();
+        });
+    });
+    </script>
 </body>
 </html>
-
-

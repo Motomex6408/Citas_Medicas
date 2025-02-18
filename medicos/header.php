@@ -27,8 +27,69 @@
         </ul>
 
          <ul>
-         <li><a class="" href="../principal/index.php" onclick="<?php session_destroy(); ?>">Salir</a></li>
+            <li><a class="" href="../principal/index.php">Salir</a></li>
          </ul>
       </nav>
+    
+    <section id="citas-medicas" class="container">
+        <h2>Citas Médicas</h2>
+        <p>Citas Asignadas</p>
+        <button type="button" class="btn-reservar" onclick="location.href='ListadeCitas.php'">
+        Lista de Citas
+        </button>
+        
+    </section>
+
+    <section id="pacientes" class="container">
+        <h2>Pacientes</h2>
+        <p>Citas Asignadas</p>
+        <button type="button" class="btn-reservar">
+        Lista de Pacientes
+        </button>
+    </section>
+
+    <section id="horarios" class="container">
+        <h2>Horarios de Medicos</h2>
+        <p>Horarios disponibles</p>
+        <button type="button" class="btn-reservar">
+        Crear Horario
+        </button>
+        <button type="button" class="btn-reservar">
+        Eliminar Horario
+        </button>
+    </section>
+
+    <section id="documentos" class="container">
+        <h2>Documentos Medicos</h2>
+        <p>Historiales Médicos</p>
+        <button type="button" class="btn-reservar">
+        Crear Documento
+        </button>
+        <button type="button" class="btn-reservar">
+        Eliminar Documento
+        </button>
+        <button type="button" class="btn-reservar">
+        Modificar Documento
+        </button>
+    </section>
+
+
+    <section id="expedientes" class="container">
+    <h2>Expedientes Medicos</h2>
+    <p>Historiales de Pacientes</p>
+    <button type="button" class="btn-reservar">
+        Crear Historial
+        </button>
+        <button type="button" class="btn-reservar">
+        Eliminar Historial
+        </button>
+        <button type="button" class="btn-reservar">
+        Modificar Historial
+        </button>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2025 MediCitas - Todos los derechos reservados</p>
+    </footer>
 </body>
 </html>
