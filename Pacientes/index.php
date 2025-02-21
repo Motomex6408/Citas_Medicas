@@ -1,17 +1,14 @@
-<?php 
-    session_start(); 
-?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="../css/estilo-admin.css">
-    <link rel="stylesheet" href="../css/estilo.css">
-    <link rel="stylesheet" href="../css/tabla.css">
+    <title>MediCitas - Citas Médicas</title>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
     <?php include 'header.php'; ?>
     <main>
@@ -65,4 +62,5 @@
         <p>&copy; 2025 MediCitas - Todos los derechos reservados</p>
     </footer>
 </body>
+
 </html>

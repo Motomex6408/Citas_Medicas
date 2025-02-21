@@ -56,21 +56,21 @@
 
         <div class="form-doctor">
             <label for="idespecialidad">Especialidad</label>
-                <select id="idespecialidad" name="idespecialidad">
-                    <option value="0">Seleccionar</option>
-                    <?php
+            <select id="idespecialidad" name="idespecialidad">
+                <option value="0">Seleccionar</option>
+                <?php
 
-                    include '../conexion.php';
-                    $consulta = "SELECT * FROM Especialidades";
-                    $statement = $conn->prepare($consulta);
-                    $statement->execute();
-                    $resultset = $statement->fetchAll();
-                    foreach ($resultset as $especialidad) {
-                        $isselected = isset($_SESSION['form_data']['idespecialidad']) && $_SESSION['form_data']['idespecialidad'] == $especialidad['idEspecialidad'] ? 'selected' : '';
-                        echo '<option value="' . $especialidad['idEspecialidad'] . '" ' . $isselected . '>' . $especialidad['nombreEspecialidad'] . '</option>';
-                    }
+                include '../conexion.php';
+                $consulta = "SELECT * FROM Especialidades";
+                $statement = $conn->prepare($consulta);
+                $statement->execute();
+                $resultset = $statement->fetchAll();
+                foreach ($resultset as $especialidad) {
+                    $isselected = isset($_SESSION['form_data']['idespecialidad']) && $_SESSION['form_data']['idespecialidad'] == $especialidad['idEspecialidad'] ? 'selected' : '';
+                    echo '<option value="' . $especialidad['idEspecialidad'] . '" ' . $isselected . '>' . $especialidad['nombreEspecialidad'] . '</option>';
+                }
                 ?>
-            </select>
+            </select>
 
             <label for="licenciaMedica">Nº Licencia Médica</label>
             <input id="licenciaMedica" type="text" name="licenciaMedica" autocomplete="off" value="<?php echo isset($_SESSION['form_data']['licenciaMedica']) ? $_SESSION['form_data']['licenciaMedica'] : ''; ?>">
@@ -87,7 +87,7 @@
             <select id="sexo" name="sexo">
                 <option value="" <?= empty($_SESSION['form_data']['tipoUsuario']) ? 'selected' : '' ?>>Seleccionar</option>
                 <option value="Masculino" <?= (isset($_SESSION['form_data']['sexo']) && $_SESSION['form_data']['sexo'] == 'Masculino') ? 'selected' : '' ?>>Masculino</option>
-                <option value="Femeinino" <?= (isset($_SESSION['form_data']['sexo']) && $_SESSION['form_data']['sexo'] == 'Femenino') ? 'selected' : '' ?>>Femenino</option>
+                <option value="Femenino" <?= (isset($_SESSION['form_data']['sexo']) && $_SESSION['form_data']['sexo'] == 'Femenino') ? 'selected' : '' ?>>Femenino</option>
             </select>
 
             <label for="telefono">Teléfono</label>

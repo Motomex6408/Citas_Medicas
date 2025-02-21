@@ -17,9 +17,9 @@
          <label for="click" class="menu-btn">
          <i class="fas fa-bars"></i>
          </label>
-         <ul>
-            <li><a href="../Principal/index.php">Inicio</a></li>
-            <li><a href="../medicos/ListadeCitas.php">Especialidades</a></li>
+         <ul class="menu">
+            <li><a href="index.php">Inicio</a></li>
+            <li><a href="../Medicos/index.php">Especialidades</a></li>
             <li><a class="active" href="../login/login.php">Iniciar sesión</a></li>
          </ul>
       </nav>
