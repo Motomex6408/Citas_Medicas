@@ -1,12 +1,9 @@
 <aside class="menu-lateral" id="menuLateral">
     <ul>
         <li><a href="index.php">Inicio</a></li>
-        <li><a href="usuarios.php">Usuarios</a></li>
-        <li><a href="medicos.php">Médicos</a></li>
-        <li><a href="pacientes.php">Pacientes</a></li>
         <li><a href="especialidades.php">Especialidades</a></li>
-        <li><a href="#">Horarios</a></li>
-        <li><a href="ListadeCitas.php">Citas</a></li>
+        <li><a href="../login/login.php">Iniciar Sesion</a></li>
+        <li><a href="#">Citas</a></li>
         <li><a href="#">Financiamientos</a></li>
     </ul>
 </aside>

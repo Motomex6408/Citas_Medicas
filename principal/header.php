@@ -19,7 +19,7 @@
          </label>
          <ul class="menu">
             <li><a href="index.php">Inicio</a></li>
-            <li><a href="../Medicos/index.php">Especialidades</a></li>
+            <li><a href="especialidades.php">Especialidades</a></li>
             <li><a class="active" href="../login/login.php">Iniciar sesión</a></li>
          </ul>
       </nav>

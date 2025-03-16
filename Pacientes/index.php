@@ -11,7 +11,8 @@
 
 <body>
     <?php include 'header.php'; ?>
-    <main>
+    <?php include 'menu.php'; ?>
+    <main class="contenido">
         <section id="sobre-nosotros" class="container">
             <h2>Sobre Nosotros</h2>
             <p>MediCitas es una clínica comprometida con el bienestar de nuestros pacientes en Santa Bárbara, Honduras. Brindamos atención médica de calidad con un equipo de profesionales altamente calificados.</p>

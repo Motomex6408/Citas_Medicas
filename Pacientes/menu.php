@@ -1,13 +1,12 @@
 <aside class="menu-lateral" id="menuLateral">
     <ul>
         <li><a href="index.php">Inicio</a></li>
-        <li><a href="usuarios.php">Usuarios</a></li>
-        <li><a href="medicos.php">Médicos</a></li>
-        <li><a href="pacientes.php">Pacientes</a></li>
+        <li><a href="Reserva.php">Reservar Cita</a></li>
         <li><a href="especialidades.php">Especialidades</a></li>
-        <li><a href="#">Horarios</a></li>
-        <li><a href="ListadeCitas.php">Citas</a></li>
-        <li><a href="#">Financiamientos</a></li>
+        <li><a href="medicos.php">Medicos</a></li>
+        <li><a href="Contacto.php">Contacto</a></li>
+        <li><a href="../cerrar-sesion.php">Cerrar Sesion</a></li>
+        
     </ul>
 </aside>
 <script>

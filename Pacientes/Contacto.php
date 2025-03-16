@@ -9,31 +9,33 @@
     <link rel="stylesheet" href="../css/tabla.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
 </head>
+
 <body>
     <?php include 'header.php'; ?>
     <?php include 'menu.php'; ?>
+
     <main class="contenido">
         <div class="table-container">
-            <h2>TABLA DE ESPECIALIDADES</h2>
+            <h2>CONTACTO MEDICOS</h2>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Descripción</th>
+                            <th>Correo</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
+                        <?php 
                         include '../conexion.php';
-                        $sql = "SELECT * FROM Especialidades";
-                        $consulta = $conn->prepare($sql);
-                        $consulta->execute();
-                        $especialidades = $consulta->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($especialidades as $row) {
+                        $sql = "SELECT * FROM Usuarios where rol = 'Médico'"; 
+                        $query = $conn->prepare($sql);
+                        $query->execute();
+                        $Usuarios = $query->fetchAll(PDO::FETCH_ASSOC);
+                        foreach ($Usuarios as $row) {
                             echo "<tr>";
-                            echo "<td>" . $row["nombreEspecialidad"] . "</td>";
-                            echo "<td>" . $row["descripcion"] . "</td>";
+                            echo "<td>" . $row["nombre"] . " " . $row["apellido"]. "</td>";
+                            echo "<td>" . $row["correo"] . "</td>";
                             echo "</tr>";
                         }
                         ?>
@@ -42,5 +44,5 @@
             </div>
         </div>
     </main>
+
 </body>
-</html>
