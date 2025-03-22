@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/estilo-admin.css">
     <link rel="stylesheet" href="../css/tabla.css">
     <link rel="stylesheet" href="../css/Reserva.css">
+    <link rel="stylesheet" href="../css/modal-usuario.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -16,8 +17,10 @@
 </head>
 <body>
 
-<?php include 'header.php'; ?>
-<?php include 'menu.php'; ?>
+<?php
+include 'header.php';
+include 'menu.php';
+?>
 
 <main class="contenido">
     <div class="table-container">
@@ -69,6 +72,19 @@
             </table>
         </div>
 
+        <div id="motivo-cita" class="modal-content" style="display:none;">
+            <h3 class="title">Motivo de la Cita</h3>
+            <div class="form-group">
+                <label for="dni">DNI:</label>
+                <input type="text" id="dni" placeholder="Ingresa tu DNI">
+            </div>
+            <div class="form-group">
+                <label for="motivo">Motivo:</label>
+                <textarea id="motivo" placeholder="Describe el motivo de tu cita"></textarea>
+            </div>
+            <button id="btn-confirmar" class="modificar">Confirmar Cita</button>
+        </div>
+
         <button id="btn-continuar" style="display:none;">Continuar</button>
     </div>
 </main>
@@ -79,6 +95,7 @@ $(document).ready(function() {
     let horarioSeleccionado = "";
 
     $(".btn-seleccionar").click(function() {
+        console.log("Botón seleccionar clickeado");
         especialidadSeleccionada = $(this).data("especialidad");
         $("#cita-container").fadeIn();
         $(".table-container").fadeOut();
@@ -112,6 +129,12 @@ $(document).ready(function() {
         $(".btn-horario").removeClass("selected");
         $(this).addClass("selected");
         horarioSeleccionado = $(this).data("horario");
+        $("#btn-continuar").fadeIn();
+    });
+
+    $("#btn-continuar").click(function() {
+        $("#motivo-cita").fadeIn();
+        $("#btn-continuar").hide();
     });
 
     $("#btn-regresar").click(function() {
@@ -122,11 +145,63 @@ $(document).ready(function() {
         $("#fecha-cita").val("");
         $("#horarios-list").empty();
         $("#horarios-disponibles").hide();
+        $("#motivo-cita").hide();
         $(".btn-horario").removeClass("selected");
         $("#btn-continuar").hide();
     });
-});
-</script>
 
+    function obtenerIdMedico() {
+        let medicoSeleccionado = $(".btn-horario.selected").data("medico");
+        return medicoSeleccionado;
+    }
+    function obtenerHora() {
+        let horaSeleccionada = $(".btn-horario.selected").data("hora");
+        return horaSeleccionada;
+    }
+
+    $("#btn-confirmar").click(function() {
+        let dni = $("#dni").val().trim();
+        let motivo = $("#motivo").val().trim();
+        if (dni === "" || motivo === "") {
+            alert("Por favor, ingresa tu DNI y el motivo de la cita.");
+            return;
+        }
+
+        let idMedico = obtenerIdMedico(); 
+        let idHorario = horarioSeleccionado; 
+        let hora = obtenerHora();
+
+        if (!idMedico || !idHorario || !hora) {
+            alert("Error: Faltan datos necesarios para confirmar la cita.");
+            return;
+        }
+        let datos = {
+            dni: dni,
+            motivo: motivo,
+            medico: idMedico,
+            horario: idHorario,
+            hora: hora
+        };
+
+
+        $.ajax({
+            url: 'InsertarCitas.php',
+            method: 'POST',
+            data: datos,
+            success: function(response) {
+                if (response === "success") {
+                    alert("Cita confirmada con éxito.");
+                    window.location.href = "Index.php";
+                } else {
+                    alert("Hubo un error al confirmar la cita: " + response);
+                }
+            },
+            error: function() {
+                alert("Error de conexión con el servidor.");
+            }
+        });
+    });
+}); 
+</script>
 </body>
 </html>

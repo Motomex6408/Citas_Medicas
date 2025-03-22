@@ -17,3 +17,5 @@
 --20/03/25-- Actualizacion del sistema que incluye el rediseño total del modulo de medicos y la implementacion de sus funciones, tales como la posibilidad de agregar un horario medico y los cupos que tendra, esto desde la pestania llamada "Horarios Medicos". Tambien, la posibilidad de agregar y subir documentos medicos y exportarlos a PDF, Excel y Word, esto desde la pestania llamada: "Documentos Medicos". La pestania: "Expedientes Medicos", aun esta siendo trabajada por lo que si se intenta acceder no le llevara a ningun lado.
 
 --22/03/25-- Se agrego la interfaz principal para Expedientes Medicos y se agregaron los complementos para el modulo de pacientes, ademas de que se corrigieron problemas de insercion en citas medicas para Administrador o Medico en el sistema. Se implementa actualizacion dinamica sin recargar a la tabla de pacientes en el modulo de Medicos.
+
+--22/03/25-- Se finalizo la parte de programacion del apartado de Reservar citas, ahora ya podras insertar los datos a la tabla citas. Aun hay detalles por pulir en ese apartado que se esperan abarcar proximamente
