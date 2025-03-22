@@ -2,11 +2,11 @@
 include '../../conexion.php';
 session_start();
 if($_SERVER["REQUEST_METHOD"] == "POST") {
-    $idhorario = $_POST['idHorario'];
-    $idmedico = $_POST['idMedico'];
+    $_SESSION['form_data'] = $_POST;
+    $idmedico = $_POST['idmedico'];
     $diasemana = $_POST['diaSemana'];
-    $horainicio = $_POST['horaInicio'];
-    $horafin = $_POST['horaFin'];
+    $horainicio = $_POST['horainicio'];
+    $horafin = $_POST['horafin'];
     $cupos = $_POST['cupos'];
     $fecha = $_POST['fecha'];
 
@@ -17,9 +17,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     try {
-        $consulta = "SELECT * FROM HorariosMedicos WHERE idMedico = ? AND fecha = ? AND horaInicio = ? AND horaFin = ? AND idHorario != ?";
+        $consulta = "SELECT * FROM HorariosMedicos WHERE idMedico = ? AND fecha = ? AND horaInicio = ? AND horaFin = ?";
         $statement = $conn->prepare($consulta);
-        $statement->execute([$idmedico, $fecha, $horainicio, $horafin, $idhorario]);
+        $statement->execute([$idmedico, $fecha, $horainicio, $horafin]);
 
         if($statement->fetch()) {
             $_SESSION['error'] = "Ya existe un horario con este médico en la misma fecha y hora.";
@@ -27,16 +27,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
-        $consulta = "UPDATE HorariosMedicos SET idMedico = ?, diaSemana = ?, horaInicio = ?, horaFin = ?, cupos = ?, fecha = ? WHERE idHorario = ?";
+        $consulta = "INSERT INTO HorariosMedicos (idMedico, diaSemana, horaInicio, horaFin, cupos, fecha) VALUES (?, ?, ?, ?, ?, ?)";
         $statement = $conn->prepare($consulta);
-        $statement->execute([$idmedico, $diasemana, $horainicio, $horafin, $cupos, $fecha, $idhorario]);
+        $statement->execute([$idmedico, $diasemana, $horainicio, $horafin, $cupos, $fecha]);
 
         if($statement->rowCount() > 0) {
-            $_SESSION['success'] = "Horario actualizado correctamente.";
+            $_SESSION['success'] = "Horario agregado correctamente.";
             unset($_SESSION['form_data']);
             header("Location: ../horarios.php");
         } else {
-            $_SESSION['error'] = "Hubo un problema al actualizar el horario.";
+            $_SESSION['error'] = "Hubo un problema al agregar el horario.";
             header("Location: ../horarios.php");
         }
 

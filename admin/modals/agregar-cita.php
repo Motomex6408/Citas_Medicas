@@ -39,6 +39,20 @@
                     <option value="Pendiente">Pendiente</option>
                     <option value="Cancelada">Cancelada</option>
                 </select>
+
+                <label for="add-horario">Horario</label>
+                <select id="add-horario" name="idHorario" required>
+                    <option value="">Seleccionar</option>
+                    <?php
+                    $sql = "SELECT idHorario, CONVERT(VARCHAR(5), HoraInicio, 108) + ' - ' + CONVERT(VARCHAR(5), HoraFin, 108) + ' ' + diaSemana AS Horario FROM HorariosMedicos";
+                    $query = $conn->prepare($sql);
+                    $query->execute();
+                    $horarios = $query->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($horarios as $horario) {
+                        echo "<option value='{$horario['idHorario']}'>{$horario['Horario']}</option>";
+                    }
+                    ?>
+                </select>
             </div>
             <button type="submit" class="modificar">Agregar Cita</button>
         </form>

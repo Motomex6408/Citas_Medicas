@@ -20,7 +20,6 @@ WHERE MONTH(H.fecha) = :mesActual
 AND YEAR(H.fecha) = :anioActual
 GROUP BY H.fecha;";
 
-
 $queryCupos = $conn->prepare($sqlCupos);
 $queryCupos->bindParam(':mesActual', $mesActual, PDO::PARAM_INT);
 $queryCupos->bindParam(':anioActual', $anioActual, PDO::PARAM_INT);

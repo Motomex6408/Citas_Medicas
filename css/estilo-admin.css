@@ -94,10 +94,15 @@ body {
   font-size: 18px;
   padding: 15px 20px;
   transition: background 0.3s ease;
+  text-align: left;
 }
 
 .menu-lateral ul li a:hover {
   background: #0d77a8;
+}
+
+.menu-lateral ul li a i {
+  margin-right: 30px; /* Espacio entre icono y texto */
 }
 
 .contenido {

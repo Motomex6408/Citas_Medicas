@@ -1,42 +1,30 @@
-<link rel="stylesheet" href="../css/modal-cita.css">
-
-<div id="modalAgregarCita" class="modalAgregarCita">
+<link rel="stylesheet" href="../css/modal-usuario.css">
+<div id="modalAgregarCita" class="modalAgregarCita" >
     <div class="modal-content">
         <span class="close">&times;</span>
         <form action="php/add-cita.php" method="POST">
             <div class="title">Nueva Cita</div>
             <div class="form-group">
-                <label for="add-paciente">Paciente</label>
-                <select id="add-paciente" name="paciente" required>
-                    <option value="">Seleccionar</option>
-                    <?php
-                    $sql = "SELECT Pacientes.idPaciente, Usuarios.nombre, Usuarios.apellido 
-                            FROM Pacientes 
-                            INNER JOIN Usuarios ON Pacientes.idUsuario = Usuarios.idUsuario";
-                    $query = $conn->prepare($sql);
-                    $query->execute();
-                    $pacientes = $query->fetchAll(PDO::FETCH_ASSOC);
-                    foreach ($pacientes as $paciente) {
-                        echo "<option value='{$paciente['idPaciente']}'>{$paciente['nombre']} {$paciente['apellido']}</option>";
-                    }
-                    ?>
-                </select>
+                <label for="add-dnipaciente">DNI Paciente</label>
+                <input type="text" name="dnipaciente" id="add-dnipaciente" autocomplete="off" required>
 
+                <label for="add-idpaciente" hidden>ID Paciente</label>
+                <input type="text" name="idpaciente" id="add-idpaciente" autocomplete="off" required readonly="true" hidden>
+
+                <label for="add-paciente">Paciente</label>
+                <input type="text" name="paciente" id="add-paciente" autocomplete="off" required readonly="true">
+
+                <label for="add-dnimedico">DNI Médico</label>
+                <input type="text" name="dnimedico" id="add-dnimedico" autocomplete="off" required>
+
+                <label for="add-idmedico" hidden>ID Médico</label>
+                <input type="text" name="idmedico" id="add-idmedico" autocomplete="off" required readonly="true" hidden>
+                
                 <label for="add-medico">Médico</label>
-                <select id="add-medico" name="medico" required>
-                    <option value="">Seleccionar</option>
-                    <?php
-                    $sql = "SELECT Medicos.idMedico, Usuarios.nombre, Usuarios.apellido 
-                            FROM Medicos 
-                            INNER JOIN Usuarios ON Medicos.idUsuario = Usuarios.idUsuario";
-                    $query = $conn->prepare($sql);
-                    $query->execute();
-                    $medicos = $query->fetchAll(PDO::FETCH_ASSOC);
-                    foreach ($medicos as $medico) {
-                        echo "<option value='{$medico['idMedico']}'>{$medico['nombre']} {$medico['apellido']}</option>";
-                    }
-                    ?>
-                </select>
+                <input type="text" name="medico" id="add-medico" autocomplete="off" required readonly="true">
+
+                <label for="add-fecha">Fecha</label>
+                <input id="add-fecha" type="date" name="fecha" autocomplete="off" required>
 
                 <label for="add-hora">Hora</label>
                 <input id="add-hora" type="time" name="hora" autocomplete="off" required>
@@ -56,12 +44,12 @@
                 <select id="add-horario" name="idHorario" required>
                     <option value="">Seleccionar</option>
                     <?php
-                    $sql = "SELECT idHorario, diaSemana FROM HorariosMedicos";
+                    $sql = "SELECT idHorario, CONCAT(HoraInicio,' - ', HoraFin) AS Horario FROM HorariosMedicos";
                     $query = $conn->prepare($sql);
                     $query->execute();
                     $horarios = $query->fetchAll(PDO::FETCH_ASSOC);
                     foreach ($horarios as $horario) {
-                        echo "<option value='{$horario['idHorario']}'>{$horario['diaSemana']}</option>";
+                        echo "<option value='{$horario['idHorario']}'>{$horario['Horario']}</option>";
                     }
                     ?>
                 </select>
@@ -70,23 +58,46 @@
         </form>
     </div>
 </div>
-
 <script>
-    var modal = document.getElementById("modalAgregarCita");
-    var btn = document.getElementById("abrirModal");
-    var span = document.getElementsByClassName("close")[0];
-
-    btn.onclick = function() {
-        modal.style.display = "block";
-    }
-
-    span.onclick = function() {
-        modal.style.display = "none";
-    }
-
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("add-dnipaciente").addEventListener("input", function () {
+        let dni = this.value.trim();
+        if (dni.length > 0) {
+            fetch("php/buscar-paciente.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "query=" + encodeURIComponent(dni),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("add-paciente").value = data.nombre || "No encontrado";
+                document.getElementById("add-idpaciente").value = data.idPaciente || "No encontrado";
+            })
+            .catch(error => console.error("Error:", error));
+        } else {
+            document.getElementById("add-paciente").value = "";
+            document.getElementById("add-idpaciente").value = "";
         }
-    }
+    });
+
+    document.getElementById("add-dnimedico").addEventListener("input", function () {
+        let dni = this.value.trim();
+        if (dni.length > 0) {
+            fetch("php/buscar-medico.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "query=" + encodeURIComponent(dni),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("add-medico").value = data.nombre || "No encontrado";
+                document.getElementById("add-idmedico").value = data.idMedico || "No encontrado";
+            })
+            .catch(error => console.error("Error:", error));
+        } else {
+            document.getElementById("add-medico").value = "";
+            document.getElementById("add-idmedico").value = "";
+        }
+    });
+});
 </script>

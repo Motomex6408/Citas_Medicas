@@ -7,12 +7,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $paciente = $_POST['paciente'];
     $idmedico = $_POST['idmedico']; 
     $medico = $_POST['medico'];
-    $fecha = $_POST['fecha'];
     $hora = $_POST['hora'];
     $motivo = $_POST['motivo']; 
     $estado = $_POST['estado'];
+    $idhorario = $_POST['idHorario'];
 
-    if (empty($idpaciente) || empty($idmedico) || empty($fecha) || empty($hora) || empty($motivo) || empty($estado)) {
+    if (empty($idpaciente) || empty($idmedico) || empty($hora) || empty($motivo) || empty($estado) || empty($idhorario)) {
         $_SESSION['error'] = "Complete los campos obligatorios.";
         header('Location: ../ListadeCitas.php');
         exit();
@@ -25,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        $consulta = "SELECT * FROM Citas WHERE idPaciente = ? AND idMedico = ? AND fecha = ? AND hora = ?";
+        $consulta = "SELECT * FROM Citas WHERE idPaciente = ? AND idMedico = ? AND idHorario = ? AND hora = ?";
         $statement = $conn->prepare($consulta);
-        $statement->execute([$idpaciente, $idmedico, $fecha, $hora]);
+        $statement->execute([$idpaciente, $idmedico, $idhorario, $hora]);
 
         if ($statement->fetch()) {
             $_SESSION['error'] = "Ya existe una cita con este paciente y médico en la misma fecha y hora.";
@@ -35,9 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit();
         }
 
-        $consulta = "INSERT INTO Citas (idPaciente, idMedico, fecha, hora, motivo, estado) VALUES (?, ?, ?, ?, ?, ?)";
+        $consulta = "INSERT INTO Citas (idPaciente, idMedico, hora, motivo, estado, idHorario) VALUES (?, ?, ?, ?, ?, ?)";
         $statement = $conn->prepare($consulta);
-        $statement->execute([$idpaciente, $idmedico, $fecha, $hora, $motivo, $estado]);
+        $statement->execute([$idpaciente, $idmedico, $hora, $motivo, $estado, $idhorario]);
 
         if($statement->rowCount() > 0) {
             $_SESSION['success'] = "Cita agregada correctamente.";
