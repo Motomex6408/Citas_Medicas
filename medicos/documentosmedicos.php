@@ -8,67 +8,45 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpWord\PhpWord;
 
 include '../conexion.php';
-
-$paciente_filter = $_GET['paciente'] ?? '';
-$cita_filter = $_GET['cita'] ?? '';
 $medico_filter = $_GET['medico'] ?? '';
-$tipo_filter = $_GET['tipo'] ?? '';
+$paciente_filter = $_GET['paciente'] ?? '';
 $fecha_filter = $_GET['fecha'] ?? '';
 
-$sql = "SELECT  
-    d.idDocumento,
-    d.idPaciente, 
-    CONCAT(u1.nombre, ' ', u1.apellido) AS paciente, 
-    h.fecha as fechaCita, 
-    d.IdMedico,
-    Concat(u2.nombre, ' ', u2.apellido) as Medico, 
-    d.tipoDocumento, 
-    d.descripcion, 
-    d.fechaSubida,
-    c.idCita  
-FROM DocumentosMedicos d
-LEFT JOIN [dbo].[Pacientes] p ON d.idPaciente = p.idPaciente
-LEFT JOIN Citas c ON d.idCita = c.idCita
-LEFT JOIN HorariosMedicos h ON c.idHorario = h.idHorario
-LEFT JOIN Medicos m ON h.idMedico = m.idMedico
-LEFT JOIN [dbo].[Usuarios] u1 ON p.idUsuario = u1.idUsuario  
-LEFT JOIN Usuarios u2 ON m.idUsuario = u2.idUsuario
-WHERE 1=1";
+$sql = "SELECT 
+        T1.idDocumento, T2.idCita, 
+        T3.idPaciente, T5.nombre + ' ' + T5.apellido AS paciente,
+        T4.idMedico, T6.nombre + ' ' + T6.apellido AS medico,
+        T1.tipoDocumento, T1.descripcion, T1.fechaSubida
+        FROM DocumentosMedicos T1
+        INNER JOIN Citas T2 ON T2.idCita = T1.idCita
+        INNER JOIN Pacientes T3 ON T3.idPaciente = T2.idPaciente
+        INNER JOIN Medicos T4 ON T4.idMedico = T2.idMedico
+        INNER JOIN Usuarios T5 ON T5.idUsuario = T3.idUsuario
+        INNER JOIN Usuarios T6 ON T6.idUsuario = T4.idUsuario
+        WHERE 1=1";
 
-if ($paciente_filter) {
-    $sql .= " AND u1.nombre LIKE :paciente_filter";
-}
-if ($cita_filter) {
-    $sql .= " AND h.idHorario = :cita_filter";
-}
 if ($medico_filter) {
-    $sql .= " AND u2.nombre LIKE :medico_filter";
+    $sql .= " AND T6.nombre LIKE '%$medico_filter%'";
 }
-if ($tipo_filter) {
-    $sql .= " AND d.tipoDocumento LIKE :tipo_filter";
+if ($paciente_filter) {
+    $sql .= " AND T5.nombre LIKE '%$paciente_filter%'";
 }
 if ($fecha_filter) {
-    $sql .= " AND d.fechaSubida = :fecha_filter";
+    $sql .= " AND T1.fechaSubida = '$fecha_filter'";
 }
 
-$stmt = $conn->prepare($sql);
-if ($paciente_filter) {
-    $stmt->bindValue(':paciente_filter', '%' . $paciente_filter . '%');
+try {
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
 }
-if ($cita_filter) {
-    $stmt->bindValue(':cita_filter', $cita_filter);
+
+if (isset($_GET['ajax'])) {
+    echo json_encode($documentos);
+    exit;
 }
-if ($medico_filter) {
-    $stmt->bindValue(':medico_filter', '%' . $medico_filter . '%');
-}
-if ($tipo_filter) {
-    $stmt->bindValue(':tipo_filter', '%' . $tipo_filter . '%');
-}
-if ($fecha_filter) {
-    $stmt->bindValue(':fecha_filter', $fecha_filter);
-}
-$stmt->execute();
-$documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (isset($_GET['export_pdf'])) {
     $html = "<h1>Lista de Documentos Médicos</h1>";
@@ -176,25 +154,49 @@ if (isset($_GET['export_word'])) {
 }
 $documentos = [];
 $stmt = $conn->prepare($sql);
-if ($paciente_filter) {
-    $stmt->bindValue(':paciente_filter', '%' . $paciente_filter . '%');
-}
-if ($cita_filter) {
-    $stmt->bindValue(':cita_filter', $cita_filter);
-}
-if ($medico_filter) {
-    $stmt->bindValue(':medico_filter', '%' . $medico_filter . '%');
-}
-if ($tipo_filter) {
-    $stmt->bindValue(':tipo_filter', '%' . $tipo_filter . '%');
-}
-if ($fecha_filter) {
-    $stmt->bindValue(':fecha_filter', $fecha_filter);
-}
 $stmt->execute();
 $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
+<style>
+    .add-btn,
+    .btn-pdf,
+    .btn-excel,
+    .btn-word {
+        display: inline-block;
+        background-color: #0b5471;
+        color: white;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .add-btn:hover,
+    .btn-pdf:hover,
+    .btn-excel:hover,
+    .btn-word:hover {
+        background-color: rgb(10, 60, 80);
+    }
+
+    @media (max-width: 768px) {
+
+
+        .export-buttons {
+            flex-direction: column;
+        }
+
+        .add-btn,
+        .btn-pdf,
+        .btn-excel,
+        .btn-word {
+            width: 100%;
+            margin-right: 0;
+        }
+    }
+</style>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -216,10 +218,9 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="filter-container">
                 <form method="GET" action="">
-                    <input type="text" name="paciente" placeholder="Buscar por Paciente" value="<?= $paciente_filter ?>" autocomplete="off">
-                    <input type="text" name="medico" placeholder="Buscar por Médico" value="<?= $medico_filter ?>" autocomplete="off">
-                    <input type="date" name="fecha" value="<?= $fecha_filter ?>">
-                    <button type="submit">Filtrar</button>
+                    <input type="text" id="searchPaciente" name="paciente" placeholder="Buscar por Paciente" value="" autocomplete="off">
+                    <input type="text" id="searchMedico" name="medico" placeholder="Buscar por Médico" value="" autocomplete="off">
+                    <input type="date" id="searchFecha" name="fecha" value="">
                 </form>
             </div>
 
@@ -236,8 +237,8 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>ID Cita</th>
                                 <th>Paciente</th>
-                                <th>Cita</th>
                                 <th>Médico</th>
                                 <th>Tipo</th>
                                 <th>Descripción</th>
@@ -245,32 +246,27 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="documentosTable">
                             <?php if ($documentos) {
                                 foreach ($documentos as $fila) {
                                     echo "<tr>
                                         <td>{$fila['idDocumento']}</td>
+                                        <td>{$fila['idCita']}</td>
                                         <td>{$fila['paciente']}</td>
-                                        <td>{$fila['fechaCita']}</td>
-                                        <td>{$fila['Medico']}</td>
+                                        <td>{$fila['medico']}</td>
                                         <td>{$fila['tipoDocumento']}</td>
                                         <td>{$fila['descripcion']}</td>
                                         <td>{$fila['fechaSubida']}</td>
                                         <td>
                                             <a href='#' class='edit-btn' 
                                                 data-id='{$fila['idDocumento']}'
-                                                data-idpaciente='{$fila['idPaciente']}'
-                                                data-paciente='{$fila['paciente']}'
                                                 data-idcita='{$fila['idCita']}'
-                                                data-cita='{$fila['fechaCita']}'
-                                                data-medico='{$fila['Medico']}'
+                                                data-paciente='{$fila['paciente']}'
+                                                data-medico='{$fila['medico']}'
                                                 data-tipo='{$fila['tipoDocumento']}'
                                                 data-descripcion='{$fila['descripcion']}'
-                                                data-fecha='{$fila['fechaSubida']}'
-                                                data-idmedico='{$fila['IdMedico']}'
-                                            >
-                                            <img src='../img/edit.png' width='35' height='35'>
-                                            </a>
+                                                data-fecha='{$fila['fechaSubida']}'>
+                                                <img src='../img/edit.png' width='35' height='35'></a>
                                             <a href='#' class='delete-btn' data-id='{$fila['idDocumento']}'>
                                                 <img src='../img/delete.png' width='35' height='35'>
                                             </a>
@@ -289,162 +285,191 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </main>
     </div>
-    <style>
-        .add-btn,
-        .btn-pdf,
-        .btn-excel,
-        .btn-word {
-            display: inline-block;
-            background-color: #0b5471;
-            color: white;
-            padding: 10px 20px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .add-btn:hover,
-        .btn-pdf:hover,
-        .btn-excel:hover,
-        .btn-word:hover {
-            background-color: #9bbdf0;
-        }
-
-        @media (max-width: 768px) {
-
-            .export-buttons {
-                flex-direction: column;
-            }
-
-            .add-btn,
-            .btn-pdf,
-            .btn-excel,
-            .btn-word {
-                width: 100%;
-                margin-right: 0;
-            }
-        }
-    </style>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-    const modals = document.querySelectorAll(".modalAgregarDocumento, .modalEditarDocumento");
-    const closeButtons = document.querySelectorAll(".close");
-    const editButtons = document.querySelectorAll(".edit-btn");
-    const addButtons = document.querySelectorAll(".add-btn");
-    const deleteButtons = document.querySelectorAll(".delete-btn");
-
-    addButtons.forEach(btn => {
-        btn.addEventListener("click", function(event) {
-            event.preventDefault();
-            document.getElementById("modalAgregarDocumento").style.display = "block";
-        });
-    });
-
-    closeButtons.forEach(button => {
-        button.addEventListener("click", function() {
-            modals.forEach(modal => modal.style.display = "none");
-        });
-    });
-
-    window.onclick = function(event) {
-        modals.forEach(modal => {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        });
-    };
-
-    editButtons.forEach(btn => {
-    btn.addEventListener("click", function(event) {
-        event.preventDefault();
-        const idDocumento = btn.dataset.id;
-        const idPaciente = btn.dataset.idpaciente; 
-        const paciente = btn.dataset.paciente;
-        const idCita = btn.dataset.idcita;  
-        const cita = btn.dataset.cita;  
-        const medico = btn.dataset.medico;
-        const tipo = btn.dataset.tipo;
-        const descripcion = btn.dataset.descripcion;
-        const fecha = btn.dataset.fecha;
-        const idMedico = btn.dataset.idmedico;
-
-        document.getElementById("edit-idDocumento").value = idDocumento;
-        document.getElementById("edit-idPaciente").value = idPaciente; 
-        document.getElementById("edit-nombrePaciente").value = paciente;
-        document.getElementById("edit-idCita").value = idCita; 
-        document.getElementById("edit-fechaCita").value = cita;  
-        document.getElementById("edit-tipoDocumento").value = tipo;
-        document.getElementById("edit-descripcion").value = descripcion;
-        document.getElementById("edit-fechaSubida").value = fecha;
-        document.getElementById("edit-idMedico").value = idMedico;
-        document.getElementById("edit-nombreMedico").value = medico;
-
-        document.getElementById("modalEditarDocumento").style.display = "block";
-    });
-});
-
-deleteButtons.forEach(btn => {
-    btn.addEventListener("click", async event => {
-        event.preventDefault();
-        const idDocumento = btn.dataset.id;
-
-        // Confirmación de eliminación
-        const confirmacion = await Swal.fire({
-            title: `¿Eliminar el documento Nº ${idDocumento}?`,
-            text: "Esta acción no se puede deshacer.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Eliminar",
-            cancelButtonText: "Cancelar"
-        });
-
-        if (!confirmacion.isConfirmed) return;
-
-        try {
-            
-            const response = await fetch("php/delete-documento.php", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: `idDocumento=${idDocumento}`
-            });
-
-            const data = await response.json();
-
-            if (data.status === "success") {
-                await Swal.fire({
-                    title: "Éxito",
-                    text: data.message,
-                    icon: "success"
-                });
-                location.reload(); 
-            } else {
-                await Swal.fire({
-                    title: "Error",
-                    text: data.message,
-                    icon: "error"
-                });
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            await Swal.fire({
-                title: "Error",
-                text: "Hubo un problema al eliminar el documento.",
-                icon: "error"
-            });
-        }
-    });
-});
-});
-
-    </script>
 </body>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchPaciente = document.getElementById("searchPaciente");
+        const searchMedico = document.getElementById("searchMedico");
+        const searchFecha = document.getElementById("searchFecha");
+        const documentosTable = document.getElementById("documentosTable");
+
+        window.fetchDocuments = function() {
+            const paciente = searchPaciente.value.trim();
+            const medico = searchMedico.value.trim();
+            const fecha = searchFecha.value.trim();
+
+            const params = new URLSearchParams({
+                paciente,
+                medico,
+                fecha,
+                ajax: 1
+            });
+
+            fetch(`documentosmedicos.php?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    documentosTable.innerHTML = "";
+                    if (data.length > 0) {
+                        data.forEach(documentos => {
+                            const row = `
+                    <tr>
+                        <td>${documentos.idDocumento}</td>
+                        <td>${documentos.idCita}</td>
+                        <td>${documentos.paciente}</td>
+                        <td>${documentos.medico}</td>
+                        <td>${documentos.tipoDocumento}</td>
+                        <td>${documentos.descripcion}</td>
+                        <td>${documentos.fechaSubida}</td>
+                        <td>
+                            <a href="#" class="edit-btn" 
+                                data-id="${documentos.idDocumento}"
+                                data-idcita="${documentos.idCita}"
+                                data-paciente="${documentos.paciente}"
+                                data-medico="${documentos.medico}"
+                                data-tipo="${documentos.tipoDocumento}"
+                                data-descripcion="${documentos.descripcion}"
+                                data-fecha="${documentos.fechaSubida}">
+                                <img src="../img/edit.png" width="35" height="35"></a>
+                            <a href="#" class="delete-btn" data-id="${documentos.idDocumento}">
+                                <img src="../img/delete.png" width="35" height="35">
+                            </a>
+                        </td>
+                    </tr>
+                `;
+                            documentosTable.innerHTML += row;
+                        });
+                    } else {
+                        documentosTable.innerHTML = "<tr><td colspan='8'>No hay usuarios registrados</td></tr>";
+                    }
+
+                    // Vuelve a asignar eventos a los botones después de actualizar la tabla
+                    asignarEventosBotones();
+                })
+                .catch(error => console.error("Error en la búsqueda:", error));
+        }
+        // Eventos para filtrar en tiempo real
+        searchPaciente.addEventListener("keyup", fetchDocuments);
+        searchMedico.addEventListener("keyup", fetchDocuments);
+        searchFecha.addEventListener("change", fetchDocuments);
+    });
+
+    function asignarEventosBotones() {
+        const editButtons = document.querySelectorAll(".edit-btn");
+        const deleteButtons = document.querySelectorAll(".delete-btn");
+
+        editButtons.forEach(btn => {
+            btn.addEventListener("click", function(event) {
+                event.preventDefault();
+                const idDocumento = btn.dataset.id;
+                const idPaciente = btn.dataset.idpaciente;
+                const paciente = btn.dataset.paciente;
+                const idCita = btn.dataset.idcita;
+                const cita = btn.dataset.cita;
+                const medico = btn.dataset.medico;
+                const tipo = btn.dataset.tipo;
+                const descripcion = btn.dataset.descripcion;
+                const fecha = btn.dataset.fecha;
+                const idMedico = btn.dataset.idmedico;
+
+                document.getElementById("edit-idDocumento").value = idDocumento;
+                document.getElementById("edit-idPaciente").value = idPaciente;
+                document.getElementById("edit-nombrePaciente").value = paciente;
+                document.getElementById("edit-idCita").value = idCita;
+                document.getElementById("edit-fechaCita").value = cita;
+                document.getElementById("edit-tipoDocumento").value = tipo;
+                document.getElementById("edit-descripcion").value = descripcion;
+                document.getElementById("edit-fechaSubida").value = fecha;
+                document.getElementById("edit-idMedico").value = idMedico;
+                document.getElementById("edit-nombreMedico").value = medico;
+
+                document.getElementById("modalEditarDocumento").style.display = "block";
+            });
+        });
+
+        deleteButtons.forEach(btn => {
+            btn.addEventListener("click", async event => {
+                event.preventDefault();
+                const idDocumento = btn.dataset.id;
+
+                // Confirmación de eliminación
+                const confirmacion = await Swal.fire({
+                    title: `¿Eliminar el documento Nº ${idDocumento}?`,
+                    text: "Esta acción no se puede deshacer.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#3085d6",
+                    confirmButtonText: "Eliminar",
+                    cancelButtonText: "Cancelar"
+                });
+
+                if (!confirmacion.isConfirmed) return;
+
+                try {
+
+                    const response = await fetch("php/delete-documento.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: `idDocumento=${idDocumento}`
+                    });
+
+                    const data = await response.json();
+
+                    if (data.status === "success") {
+                        await Swal.fire({
+                            title: "Éxito",
+                            text: data.message,
+                            icon: "success"
+                        });
+                        location.reload();
+                    } else {
+                        await Swal.fire({
+                            title: "Error",
+                            text: data.message,
+                            icon: "error"
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    await Swal.fire({
+                        title: "Error",
+                        text: "Hubo un problema al eliminar el documento.",
+                        icon: "error"
+                    });
+                }
+            });
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const modals = document.querySelectorAll(".modalAgregarDocumento, .modalEditarDocumento");
+        const closeButtons = document.querySelectorAll(".close");
+        const addButtons = document.querySelectorAll(".add-btn");
+
+        addButtons.forEach(btn => {
+            btn.addEventListener("click", function(event) {
+                event.preventDefault();
+                document.getElementById("modalAgregarDocumento").style.display = "block";
+            });
+        });
+
+        closeButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                modals.forEach(modal => modal.style.display = "none");
+            });
+        });
+
+        window.onclick = function(event) {
+            modals.forEach(modal => {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            });
+        };
+    });
+</script>
 <?php include 'alert.php'; ?>
 
 </html>

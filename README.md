@@ -20,4 +20,6 @@
 
 --22/03/25-- Se finalizo la parte de programacion del apartado de Reservar citas, ahora ya podras insertar los datos a la tabla citas. Aun hay detalles por pulir en ese apartado que se esperan abarcar proximamente
 
---- 24/03/2025 --- Se agrega una mejora en la asignacion de horarios medicos donde se puede obtener sugerencias de medicos existentes en la base de datos del sistema para una busqueda mas rapida y facil de hacer. Se implementan las mismas actualizaciones en Médicos para las secciones de Horarios y Citas Médicas como en Administrador.
+---24/03/2025--- Se agrega una mejora en la asignacion de horarios medicos donde se puede obtener sugerencias de medicos existentes en la base de datos del sistema para una busqueda mas rapida y facil de hacer. Se implementan las mismas actualizaciones en Médicos para las secciones de Horarios y Citas Médicas como en Administrador.
+
+--25/03/2025-- Se corrigio el error al descargar Archivos PDF, Excel y Word, ademas se mejora la logica de la seccion de Documentos medicos y se actualiza el modalAgregarDocumento para poder seleccionar las citas registradas de forma mas facil y rapida, se agrega actualizacion dinamica a la tabla de documentos medicos.

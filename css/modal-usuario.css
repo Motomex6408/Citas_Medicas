@@ -13,7 +13,8 @@
 .modalEditarMedico, .modalEditarPaciente, 
 .modalAgregarEspecialidad, .modalEditarEspecialidad,
 .modalAgregarCita, .modalEditarCita,
-.modalAgregarHorario, .modalEditarHorario {
+.modalAgregarHorario, .modalEditarHorario,
+.modalAgregarDocumento, .modalEditarDocumento {
     display: none; /* Oculto por defecto */
     position: fixed;
     z-index: 1000;
