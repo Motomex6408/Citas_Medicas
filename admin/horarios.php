@@ -12,7 +12,7 @@ $anioActual = isset($_GET['anio']) ? $_GET['anio'] : date('Y');
 $diasEnMes = cal_days_in_month(CAL_GREGORIAN, $mesActual, $anioActual);
 
 $sqlCupos = "SELECT H.fecha, 
-       SUM(H.cupos) - COALESCE(COUNT(C.idCita), 0) AS cuposDisponibles
+       SUM(H.cupos) AS cuposDisponibles
 FROM HorariosMedicos H
 LEFT JOIN Citas C 
     ON H.idHorario = C.idHorario 
@@ -40,8 +40,6 @@ foreach ($cuposPorFecha as $row) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Horarios Médicos</title>
-
-    <link rel="stylesheet" href="../css/tabla.css">
     <style>
         .schedule-container {
             background: #ffffff;
@@ -246,7 +244,7 @@ foreach ($cuposPorFecha as $row) {
         document.getElementById("edit-idHorario").value = "";
         document.getElementById("edit-dnimedico").value = "";
         document.getElementById("edit-idmedico").value = "";
-        document.getElementById("edit-nombreMedico").value = "";
+        document.getElementById("edit-buscarmedico").value = "";
         document.getElementById("edit-fecha").value = fecha;
         document.getElementById("edit-diaSemana").value = dia;
         document.getElementById("edit-hora").value = "";
@@ -282,7 +280,7 @@ foreach ($cuposPorFecha as $row) {
                 tr.innerHTML = `
                 <td>${horario.fecha}</td>
                 <td>${horario.diaSemana}</td>
-                <td>${horario.Medico}</td>
+                <td>${horario.medico}</td>
                 <td>${horario.HoraInicio} - ${horario.HoraFin}</td>
                 <td>${horario.cupos}</td>
                 <td>
@@ -290,7 +288,7 @@ foreach ($cuposPorFecha as $row) {
                     data-idhorario="${horario.idHorario}"
                     data-dnimedico="${horario.DNIMedico}"
                     data-idmedico="${horario.idMedico}"
-                    data-nombremedico="${horario.Medico}"
+                    data-nombremedico="${horario.medico}"
                     data-fecha="${horario.fecha}"
                     data-diasemana="${horario.diaSemana}"
                     data-horainicio="${horario.HoraInicio}"

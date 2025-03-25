@@ -19,3 +19,5 @@
 --22/03/25-- Se agrego la interfaz principal para Expedientes Medicos y se agregaron los complementos para el modulo de pacientes, ademas de que se corrigieron problemas de insercion en citas medicas para Administrador o Medico en el sistema. Se implementa actualizacion dinamica sin recargar a la tabla de pacientes en el modulo de Medicos.
 
 --22/03/25-- Se finalizo la parte de programacion del apartado de Reservar citas, ahora ya podras insertar los datos a la tabla citas. Aun hay detalles por pulir en ese apartado que se esperan abarcar proximamente
+
+--- 24/03/2025 --- Se agrega una mejora en la asignacion de horarios medicos donde se puede obtener sugerencias de medicos existentes en la base de datos del sistema para una busqueda mas rapida y facil de hacer. Se implementan las mismas actualizaciones en Médicos para las secciones de Horarios y Citas Médicas como en Administrador.

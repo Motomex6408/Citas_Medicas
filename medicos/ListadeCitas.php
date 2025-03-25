@@ -23,7 +23,8 @@ $sql = "SELECT Citas.idCita,
        HorariosMedicos.fecha AS FechaAtencion, 
        CONVERT(VARCHAR, Citas.hora, 108) AS hora,
        Citas.motivo,
-       Citas.estado
+       Citas.estado,
+       Citas.idHorario
         FROM Citas 
         INNER JOIN Pacientes ON Citas.idPaciente = Pacientes.idPaciente
         INNER JOIN Usuarios U1 ON Pacientes.idUsuario = U1.idUsuario
@@ -275,9 +276,11 @@ if (isset($_GET['export_word'])) {
                                                 data-idmedico='{$fila['idMedico']}'
                                                 data-dnimedico='{$fila['dnimedico']}'
                                                 data-medico='{$fila['medico']}'
+                                                data-fecha='{$fila['FechaAtencion']}'
                                                 data-hora='{$fila['hora']}'
                                                 data-motivo='{$fila['motivo']}'
-                                                data-estado='{$fila['estado']}'><img src='../img/edit.png' width='35' height='35'></a>
+                                                data-estado='{$fila['estado']}'
+                                                data-idhorario='{$fila['idHorario']}'><img src='../img/edit.png' width='35' height='35'></a>
                                             <a href='#' class='delete-btn' data-idcita='{$fila['idCita']}'>
                                             <img src='../img/delete.png' width='35' height='35'></a>
 
@@ -339,10 +342,11 @@ if (isset($_GET['export_word'])) {
                                 data-idmedico="${citas.idMedico}"
                                 data-dnimedico="${citas.dnimedico}"
                                 data-medico="${citas.medico}"
-                                data-fecha="${citas.fecha}"
+                                data-fecha="${citas.FechaAtencion}"
                                 data-hora="${citas.hora}"
                                 data-motivo="${citas.motivo}"
-                                data-estado="${citas.estado}">
+                                data-estado="${citas.estado}"
+                                data-idhorario="${citas.idHorario}">
                                 <img src="../img/edit.png" width="35" height="35"></a>
                             <a href="#" class="delete-btn" data-idcita="${citas.idCita}">
                                 <img src="../img/delete.png" width="35" height="35">
@@ -377,7 +381,7 @@ if (isset($_GET['export_word'])) {
                 document.getElementById("edit-idCita").value = this.dataset.idcita;
                 document.getElementById("edit-idpaciente").value = this.dataset.idpaciente;
                 document.getElementById("edit-dnipaciente").value = this.dataset.dnipaciente;
-                document.getElementById("edit-paciente").value = this.dataset.paciente;
+                document.getElementById("edit-buscarpaciente").value = this.dataset.paciente;
                 document.getElementById("edit-idmedico").value = this.dataset.idmedico;
                 document.getElementById("edit-dnimedico").value = this.dataset.dnimedico;
                 document.getElementById("edit-medico").value = this.dataset.medico;
@@ -385,6 +389,7 @@ if (isset($_GET['export_word'])) {
                 document.getElementById("edit-hora").value = this.dataset.hora;
                 document.getElementById("edit-motivo").value = this.dataset.motivo;
                 document.getElementById("edit-estado").value = this.dataset.estado;
+                document.getElementById("edit-idhorario").value = this.dataset.idhorario;
                 console.log(this.dataset);
                 modalEditarCita.style.display = "block";
             });

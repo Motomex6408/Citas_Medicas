@@ -196,7 +196,7 @@ try {
                         <p><?php echo htmlspecialchars($total_pacientes); ?></p>
                     </div>
                     <div class="estadistica">
-                        <h3>Citas</h3>
+                        <h3>Citas Médicas</h3>
                         <p><?php echo htmlspecialchars($total_citas); ?></p>
                     </div>
                     <div class="estadistica">
