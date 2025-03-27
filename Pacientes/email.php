@@ -10,13 +10,13 @@ function enviarEmail($destinatario, $asunto, $cuerpoHTML) {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'ajair3635@gmail.com'; 
-        $mail->Password = 'urml ojju qdmw wmhk';
+        $mail->Username = 'medicitas25@gmail.com'; 
+        $mail->Password = 'thvx dbmb kcvn vhzz';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
         
 
-        $mail->setFrom('ajair3635@gmail.com', 'MediCitas');
+        $mail->setFrom('medicitas25@gmail.com', 'MediCitas');
         $mail->addAddress($destinatario);
         
         $mail->isHTML(true);

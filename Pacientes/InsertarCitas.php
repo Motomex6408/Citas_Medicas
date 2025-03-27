@@ -2,7 +2,6 @@
 session_start();
 include '../conexion.php';
 
-
 require '../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -12,45 +11,51 @@ function enviarCorreo($destinatario, $asunto, $cuerpoHTML) {
     $mail = new PHPMailer(true);
     
     try {
-
         $mail->SMTPDebug = SMTP::DEBUG_OFF; 
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'ajair3635@gmail.com';
-        $mail->Password = 'urml ojju qdmw wmhk'; 
+        $mail->Username = 'medicitas25@gmail.com';
+        $mail->Password = 'thvx dbmb kcvn vhzz'; 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
-        
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ];
 
-        $mail->CharSet = 'UTF-8'; 
-        $mail->Encoding = 'base64'; 
-        $mail->addCustomHeader('Precedence', 'bulk');
-        
-
-        $mail->setFrom('ajair3635@gmail.com', 'MediCitas');
-        $mail->addReplyTo('no-responder@medicitas.com', 'No Responder');
+        $mail->CharSet = 'UTF-8';
+        $mail->Encoding = 'base64';
+        $mail->setFrom('medicitas25@gmail.com', 'MediCitas');
         $mail->addAddress($destinatario);
-        
-
         $mail->isHTML(true);
         $mail->Subject = $asunto;
         $mail->Body = $cuerpoHTML;
-        $mail->AltBody = strip_tags($cuerpoHTML); 
-        $mail->Priority = 1;
+        $mail->AltBody = strip_tags($cuerpoHTML);
         
-        if(!$mail->send()) {
-            error_log("Error al enviar correo: " . $mail->ErrorInfo);
-            return false;
-        }
-        return true;
+        return $mail->send();
     } catch (Exception $e) {
-        error_log("Excepción al enviar correo: " . $e->getMessage());
+        error_log("Error al enviar correo: " . $e->getMessage());
         return false;
     }
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $required = ['dni', 'motivo', 'medico', 'horario', 'hora'];
+    foreach ($required as $field) {
+        if (empty($_POST[$field])) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => "El campo $field es requerido."
+            ]);
+            exit;
+        }
+    }
+
     $dni = $_POST["dni"];
     $motivo = trim($_POST["motivo"]);
     $idMedico = $_POST["medico"];
@@ -58,129 +63,157 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $hora = $_POST["hora"];
     $estado = "pendiente";
 
-    if (empty($dni)) {
-        echo json_encode(['success' => false, 'message' => 'DNI no proporcionado.']);
-        exit;
-    }
-
     try {
         $conn->beginTransaction();
 
-       
-        $stmtUsuario = $conn->prepare("SELECT idUsuario FROM Usuarios WHERE dni = :dni");
-        $stmtUsuario->bindParam(":dni", $dni);
-        $stmtUsuario->execute();
-        
-        if (!$usuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC)) {
-            throw new Exception("No se encontró un usuario con el DNI proporcionado.");
+
+        $stmt = $conn->prepare("
+            SELECT p.idPaciente, u.nombre, u.correo 
+            FROM Usuarios u
+            JOIN Pacientes p ON u.idUsuario = p.idUsuario
+            WHERE u.dni = ?
+        ");
+        $stmt->execute([$dni]);
+        $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$paciente) {
+            throw new Exception("No se encontró un paciente con el DNI proporcionado.");
         }
 
-        
-        $stmtPaciente = $conn->prepare("SELECT idPaciente FROM Pacientes WHERE idUsuario = :idUsuario");
-        $stmtPaciente->bindParam(":idUsuario", $usuario['idUsuario']);
-        $stmtPaciente->execute();
-        
-        if (!$paciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC)) {
-            throw new Exception("No se encontró un paciente asociado al DNI.");
-        }
 
-        
         $stmt = $conn->prepare("
             INSERT INTO Citas (idPaciente, idMedico, hora, motivo, estado, idHorario) 
-            VALUES (:idPaciente, :idMedico, :hora, :motivo, :estado, :idHorario)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
-        
-        $params = [
-            ':idPaciente' => $paciente['idPaciente'],
-            ':idMedico' => $idMedico,
-            ':hora' => $hora,
-            ':motivo' => $motivo,
-            ':estado' => $estado,
-            ':idHorario' => $idHorario
-        ];
-        
-        if (!$stmt->execute($params)) {
-            throw new Exception("No se pudo insertar la cita.");
-        }
+        $stmt->execute([
+            $paciente['idPaciente'],
+            $idMedico,
+            $hora,
+            $motivo,
+            $estado,
+            $idHorario
+        ]);
 
         $idCita = $conn->lastInsertId();
 
-       
-        $infoCita = $conn->query("
-            SELECT 
-                hm.fecha, 
-                c.hora, 
-                u_med.nombre AS medico, 
-                u_pac.nombre AS paciente, 
-                u_pac.correo
+
+        $stmt = $conn->prepare("
+            SELECT hm.fecha, c.hora, u.nombre AS medico 
             FROM Citas c
             JOIN HorariosMedicos hm ON c.idHorario = hm.idHorario
             JOIN Medicos m ON c.idMedico = m.idMedico
-            JOIN Usuarios u_med ON m.idUsuario = u_med.idUsuario
-            JOIN Pacientes p ON c.idPaciente = p.idPaciente
-            JOIN Usuarios u_pac ON p.idUsuario = u_pac.idUsuario
-            WHERE c.idCita = $idCita
-        ")->fetch(PDO::FETCH_ASSOC);
+            JOIN Usuarios u ON m.idUsuario = u.idUsuario
+            WHERE c.idCita = ?
+        ");
+        $stmt->execute([$idCita]);
+        $cita = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$infoCita) {
-            throw new Exception("No se pudieron obtener los datos para el correo.");
+        if (!$cita) {
+            throw new Exception("No se pudieron obtener los detalles de la cita.");
         }
 
-       
-        $logoPath = __DIR__ . '/../img/logo-medicitas.png';
-        if (!file_exists($logoPath)) {
-            throw new Exception("No se encontró el archivo del logo.");
-        }
-
-        $logoData = base64_encode(file_get_contents($logoPath));
-        $logoMime = mime_content_type($logoPath);
-
-        
-        $asunto = "Cita Médica Registrada - En espera de aprobación"; 
+        $asunto = "Cita Médica Registrada - En espera de aprobación";
+        $hora_formateada = date("H:i", strtotime($cita['hora']));
         $mensaje = "
-            <!DOCTYPE html>
-            <html lang='es'>
-            <head>
-                <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
-            </head>
-            <body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                <h2 style='color: #2c3e50;'>¡Hola {$infoCita['paciente']}!</h2>
-                <p style='color: #34495e;'>Hemos recibido tu solicitud de cita médica con los siguientes detalles:</p>
-                
-                <ul style='color: #34495e;'>
-                    <li><strong>Fecha:</strong> {$infoCita['fecha']}</li>
-                    <li><strong>Hora:</strong> {$infoCita['hora']}</li>
-                    <li><strong>Médico:</strong> Dr. {$infoCita['medico']}</li>
-                </ul>
-                
-                <p style='color: #34495e;'><em>Actualmente tu cita está en <strong>espera de aprobación</strong>. 
-                Recibirás un nuevo correo cuando sea confirmada por nuestro equipo.</em></p>
-                
-                <p style='color: #34495e;'>Gracias por confiar en nosotros,<br>El equipo de <strong>MediCitas</strong></p>
-            </body>
-            </html>
-        ";
+        <!DOCTYPE html>
+        <html lang='es'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Cita Médica Registrada</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 20px;
+                    text-align: center;
+                }
+                .container {
+                    max-width: 600px;
+                    background: white;
+                    padding: 20px;
+                    margin: auto;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                    background-color: #2c8dfb;
+                    color: white;
+                    padding: 15px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    border-radius: 8px 8px 0 0;
+                }
+                .content {
+                    text-align: left;
+                    padding: 20px;
+                }
+                .details {
+                    background: #f9f9f9;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                }
+                .highlight {
+                    color: #2c8dfb;
+                    font-weight: bold;
+                }
+                .footer {
+                    font-size: 14px;
+                    color: #555;
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>Cita Médica Registrada</div>
+                <div class='content'>
+                    <p>¡Hola <span class='highlight'>{$paciente['nombre']}</span>!</p>
+                    <p>Hemos recibido tu solicitud de cita médica con los siguientes detalles:</p>
+                    <div class='details'>
+                        <p><strong>Fecha:</strong> {$cita['fecha']}</p>
+                        <p><strong>Hora:</strong> {$hora_formateada}</p>
+                        <p><strong>Médico:</strong> Dr. {$cita['medico']}</p>
+                    </div>
+                    <p><em>Actualmente, tu cita está en espera de aprobación.</em></p>
+                    <p class='footer'>Gracias por confiar en nosotros,<br><strong>El equipo de MediCitas</strong></p>
+                </div>
+            </div>
+        </body>
+        </html>
+    ";
 
-        $envioExitoso = enviarCorreo($infoCita['correo'], $asunto, $mensaje);
-        
-        if (!$envioExitoso) {
-            error_log("Falló el envío de correo pero la cita se registró. Destinatario: ".$infoCita['correo']);
-            $mensajeRespuesta = 'Cita registrada. Hubo un problema al enviar el correo de confirmación.';
-        } else {
-            $mensajeRespuesta = 'Cita registrada. Revisa tu correo para más detalles.';
-        }
+        $envioExitoso = enviarCorreo($paciente['correo'], $asunto, $mensaje);
 
         $conn->commit();
+        header('Content-Type: application/json');
         echo json_encode([
             'success' => true,
-            'message' => $mensajeRespuesta
+            'message' => $envioExitoso 
+                ? 'Cita registrada correctamente. Se ha enviado un correo de confirmación.'
+                : 'Cita registrada, pero no se pudo enviar el correo de confirmación.'
         ]);
-
+        
     } catch (Exception $e) {
         $conn->rollBack();
+        $errorMessage = 'Hubo un error al confirmar la cita: ' . $e->getMessage();
+        error_log($errorMessage); 
+        
+        header('Content-Type: application/json');
+        http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => $errorMessage
         ]);
+        exit;
     }
+} else {
+    header('Content-Type: application/json');
+    http_response_code(405);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Método no permitido'
+    ]);
 }
