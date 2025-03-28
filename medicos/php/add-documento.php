@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     try {
         // Verificar si ya existe un documento con los mismos datos
-        $consulta = "SELECT * FROM DocumentosMedicos WHERE idCita = ? AND tipoDocumento = ?";
+        $consulta = "SELECT * FROM DocumentosMedicos WHERE idCita = ? AND tipoDocumento = ? AND descripcion = ?";
         $statement = $conn->prepare($consulta);
         $statement->execute([$idCita, $tipoDocumento, $descripcion]);
 

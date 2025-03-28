@@ -1,8 +1,14 @@
 <?php
-session_start();
-include '../conexion.php';
+// Configuración de cabeceras para AJAX y CORS
+header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
 
+require_once 'session-control.php';
+include '../conexion.php';
 require '../vendor/autoload.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
@@ -44,16 +50,21 @@ function enviarCorreo($destinatario, $asunto, $cuerpoHTML) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Validación de campos requeridos
     $required = ['dni', 'motivo', 'medico', 'horario', 'hora'];
+    $missing = [];
     foreach ($required as $field) {
         if (empty($_POST[$field])) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => false,
-                'message' => "El campo $field es requerido."
-            ]);
-            exit;
+            $missing[] = $field;
         }
+    }
+    
+    if (!empty($missing)) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => "Faltan campos requeridos: " . implode(", ", $missing)
+        ]);
+        exit;
     }
 
     $dni = $_POST["dni"];
@@ -66,52 +77,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
         $conn->beginTransaction();
 
-
+        // Obtener información del paciente
         $stmt = $conn->prepare("
             SELECT p.idPaciente, u.nombre, u.correo 
             FROM Usuarios u
             JOIN Pacientes p ON u.idUsuario = p.idUsuario
-            WHERE u.dni = ?
+            WHERE u.dni = :dni
         ");
-        $stmt->execute([$dni]);
+        $stmt->bindParam(':dni', $dni);
+        $stmt->execute();
         $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$paciente) {
             throw new Exception("No se encontró un paciente con el DNI proporcionado.");
         }
 
-
+        // Insertar la cita
         $stmt = $conn->prepare("
             INSERT INTO Citas (idPaciente, idMedico, hora, motivo, estado, idHorario) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (:idPaciente, :idMedico, :hora, :motivo, :estado, :idHorario)
         ");
-        $stmt->execute([
-            $paciente['idPaciente'],
-            $idMedico,
-            $hora,
-            $motivo,
-            $estado,
-            $idHorario
-        ]);
+        
+        $stmt->bindParam(':idPaciente', $paciente['idPaciente']);
+        $stmt->bindParam(':idMedico', $idMedico);
+        $stmt->bindParam(':hora', $hora);
+        $stmt->bindParam(':motivo', $motivo);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':idHorario', $idHorario);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error al insertar la cita.");
+        }
 
         $idCita = $conn->lastInsertId();
 
-
+        // Obtener detalles de la cita para el correo
         $stmt = $conn->prepare("
             SELECT hm.fecha, c.hora, u.nombre AS medico 
             FROM Citas c
             JOIN HorariosMedicos hm ON c.idHorario = hm.idHorario
             JOIN Medicos m ON c.idMedico = m.idMedico
             JOIN Usuarios u ON m.idUsuario = u.idUsuario
-            WHERE c.idCita = ?
+            WHERE c.idCita = :idCita
         ");
-        $stmt->execute([$idCita]);
+        $stmt->bindParam(':idCita', $idCita);
+        $stmt->execute();
         $cita = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$cita) {
             throw new Exception("No se pudieron obtener los detalles de la cita.");
         }
 
+        // Preparar y enviar correo
         $asunto = "Cita Médica Registrada - En espera de aprobación";
         $hora_formateada = date("H:i", strtotime($cita['hora']));
         $mensaje = "
@@ -122,48 +139,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
             <title>Cita Médica Registrada</title>
             <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background-color: #f4f4f4;
-                    margin: 0;
-                    padding: 20px;
-                    text-align: center;
-                }
-                .container {
-                    max-width: 600px;
-                    background: white;
-                    padding: 20px;
-                    margin: auto;
-                    border-radius: 8px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-                .header {
-                    background-color: #2c8dfb;
-                    color: white;
-                    padding: 15px;
-                    font-size: 18px;
-                    font-weight: bold;
-                    border-radius: 8px 8px 0 0;
-                }
-                .content {
-                    text-align: left;
-                    padding: 20px;
-                }
-                .details {
-                    background: #f9f9f9;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin: 20px 0;
-                }
-                .highlight {
-                    color: #2c8dfb;
-                    font-weight: bold;
-                }
-                .footer {
-                    font-size: 14px;
-                    color: #555;
-                    margin-top: 20px;
-                }
+                body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+                .container { max-width: 600px; background: white; padding: 20px; margin: auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+                .header { background-color: #2c8dfb; color: white; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px 8px 0 0; }
+                .content { text-align: left; padding: 20px; }
+                .details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                .highlight { color: #2c8dfb; font-weight: bold; }
+                .footer { font-size: 14px; color: #555; margin-top: 20px; }
             </style>
         </head>
         <body>
@@ -182,38 +164,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
             </div>
         </body>
-        </html>
-    ";
+        </html>";
 
         $envioExitoso = enviarCorreo($paciente['correo'], $asunto, $mensaje);
 
         $conn->commit();
-        header('Content-Type: application/json');
+        
         echo json_encode([
-            'success' => true,
+            'status' => 'success',
             'message' => $envioExitoso 
                 ? 'Cita registrada correctamente. Se ha enviado un correo de confirmación.'
                 : 'Cita registrada, pero no se pudo enviar el correo de confirmación.'
         ]);
-        
+        exit;
+
     } catch (Exception $e) {
         $conn->rollBack();
-        $errorMessage = 'Hubo un error al confirmar la cita: ' . $e->getMessage();
-        error_log($errorMessage); 
         
-        header('Content-Type: application/json');
-        http_response_code(500);
+        error_log("Error en InsertarCitas.php: " . $e->getMessage());
         echo json_encode([
-            'success' => false,
-            'message' => $errorMessage
+            'status' => 'error',
+            'message' => 'Hubo un error al confirmar la cita: ' . $e->getMessage()
         ]);
         exit;
     }
 } else {
-    header('Content-Type: application/json');
-    http_response_code(405);
     echo json_encode([
-        'success' => false,
+        'status' => 'error',
         'message' => 'Método no permitido'
     ]);
+    exit;
 }

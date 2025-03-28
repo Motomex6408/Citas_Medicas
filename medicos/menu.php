@@ -6,7 +6,7 @@
         <li><a href="pacientes.php"><i class="fas fa-hospital-user"></i>Pacientes</a></li>
         <li><a href="horarios.php"><i class="fa-solid fa-calendar"></i>Horarios</a></li>
         <li><a href="documentosmedicos.php"><i class="fa-solid fa-file-medical"></i>Documentos Médicos</a></li>
-        <li><a href="#"><i class="fa-solid fa-folder-open"></i>Expedientes Médicos</a></li>
+        <li><a href="expedientesmedicos.php"><i class="fa-solid fa-folder-open"></i>Expedientes Médicos</a></li>
     </ul>
 </aside>
 <script>

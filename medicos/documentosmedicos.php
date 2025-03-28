@@ -13,9 +13,9 @@ $paciente_filter = $_GET['paciente'] ?? '';
 $fecha_filter = $_GET['fecha'] ?? '';
 
 $sql = "SELECT 
-        T1.idDocumento, T2.idCita, 
-        T3.idPaciente, T5.nombre + ' ' + T5.apellido AS paciente,
-        T4.idMedico, T6.nombre + ' ' + T6.apellido AS medico,
+        T1.idDocumento, T2.idCita, T7.fecha AS FechaCita,
+        T5.dni AS dniPaciente, T3.idPaciente, T5.nombre + ' ' + T5.apellido AS paciente,
+        T6.dni AS dniMedico, T4.idMedico, T6.nombre + ' ' + T6.apellido AS medico,
         T1.tipoDocumento, T1.descripcion, T1.fechaSubida
         FROM DocumentosMedicos T1
         INNER JOIN Citas T2 ON T2.idCita = T1.idCita
@@ -23,6 +23,7 @@ $sql = "SELECT
         INNER JOIN Medicos T4 ON T4.idMedico = T2.idMedico
         INNER JOIN Usuarios T5 ON T5.idUsuario = T3.idUsuario
         INNER JOIN Usuarios T6 ON T6.idUsuario = T4.idUsuario
+        INNER JOIN HorariosMedicos T7 ON T7.idHorario = T2.idHorario
         WHERE 1=1";
 
 if ($medico_filter) {
@@ -206,6 +207,7 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Gestión de Citas</title>
     <link rel="stylesheet" href="../css/tabla.css">
     <link rel="stylesheet" href="../css/filter.css">
+    <link rel="stylesheet" href="../css/pdfModal.css">
 </head>
 
 <body>
@@ -238,12 +240,13 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <tr>
                                 <th>ID</th>
                                 <th>ID Cita</th>
+                                <th>Fecha Cita</th>
                                 <th>Paciente</th>
                                 <th>Médico</th>
                                 <th>Tipo</th>
                                 <th>Descripción</th>
                                 <th>Fecha Subida</th>
-                                <th>Acciones</th>
+                                <th>Acción</th>
                             </tr>
                         </thead>
                         <tbody id="documentosTable">
@@ -252,6 +255,7 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     echo "<tr>
                                         <td>{$fila['idDocumento']}</td>
                                         <td>{$fila['idCita']}</td>
+                                        <td>{$fila['FechaCita']}</td>
                                         <td>{$fila['paciente']}</td>
                                         <td>{$fila['medico']}</td>
                                         <td>{$fila['tipoDocumento']}</td>
@@ -261,15 +265,16 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <a href='#' class='edit-btn' 
                                                 data-id='{$fila['idDocumento']}'
                                                 data-idcita='{$fila['idCita']}'
+                                                data-dnipaciente='{$fila['dniPaciente']}'
                                                 data-paciente='{$fila['paciente']}'
+                                                data-dnimedico='{$fila['dniMedico']}'
                                                 data-medico='{$fila['medico']}'
                                                 data-tipo='{$fila['tipoDocumento']}'
                                                 data-descripcion='{$fila['descripcion']}'
-                                                data-fecha='{$fila['fechaSubida']}'>
-                                                <img src='../img/edit.png' width='35' height='35'></a>
-                                            <a href='#' class='delete-btn' data-id='{$fila['idDocumento']}'>
-                                                <img src='../img/delete.png' width='35' height='35'>
-                                            </a>
+                                                data-fecha='{$fila['fechaSubida']}'
+                                                data-fechacita='{$fila['FechaCita']}'></a>
+                                            <a href='#' class='pdf-btn' data-id='{$fila['idDocumento']}'></a>
+                                            <a href='#' class='delete-btn' data-id='{$fila['idDocumento']}'></a>
                                         </td>
                                     </tr>";
                                 }
@@ -315,6 +320,7 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <tr>
                         <td>${documentos.idDocumento}</td>
                         <td>${documentos.idCita}</td>
+                        <td>${documentos.FechaCita}</td>
                         <td>${documentos.paciente}</td>
                         <td>${documentos.medico}</td>
                         <td>${documentos.tipoDocumento}</td>
@@ -324,15 +330,16 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <a href="#" class="edit-btn" 
                                 data-id="${documentos.idDocumento}"
                                 data-idcita="${documentos.idCita}"
+                                data-dnipaciente="${documentos.dniPaciente}"
                                 data-paciente="${documentos.paciente}"
+                                data-dnimedico="${documentos.dniMedico}"
                                 data-medico="${documentos.medico}"
                                 data-tipo="${documentos.tipoDocumento}"
                                 data-descripcion="${documentos.descripcion}"
-                                data-fecha="${documentos.fechaSubida}">
-                                <img src="../img/edit.png" width="35" height="35"></a>
-                            <a href="#" class="delete-btn" data-id="${documentos.idDocumento}">
-                                <img src="../img/delete.png" width="35" height="35">
-                            </a>
+                                data-fecha="${documentos.fechaSubida}"
+                                data-fechacita="${documentos.FechaCita}"></a>
+                            <a href='#' class='pdf-btn' data-id="${documentos.idDocumento}"></a>
+                            <a href="#" class="delete-btn" data-id="${documentos.idDocumento}"></a>
                         </td>
                     </tr>
                 `;
@@ -356,32 +363,32 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     function asignarEventosBotones() {
         const editButtons = document.querySelectorAll(".edit-btn");
         const deleteButtons = document.querySelectorAll(".delete-btn");
+        const pdfButtons = document.querySelectorAll(".pdf-btn");
 
         editButtons.forEach(btn => {
             btn.addEventListener("click", function(event) {
                 event.preventDefault();
                 const idDocumento = btn.dataset.id;
-                const idPaciente = btn.dataset.idpaciente;
-                const paciente = btn.dataset.paciente;
                 const idCita = btn.dataset.idcita;
-                const cita = btn.dataset.cita;
+                const dnipaciente = btn.dataset.dnipaciente;
+                const paciente = btn.dataset.paciente;
+                const dnimedico = btn.dataset.dnimedico;
                 const medico = btn.dataset.medico;
                 const tipo = btn.dataset.tipo;
                 const descripcion = btn.dataset.descripcion;
                 const fecha = btn.dataset.fecha;
-                const idMedico = btn.dataset.idmedico;
+                const fechacita = btn.dataset.fechacita;
 
                 document.getElementById("edit-idDocumento").value = idDocumento;
-                document.getElementById("edit-idPaciente").value = idPaciente;
+                document.getElementById("edit-dniPaciente").value = dnipaciente;
                 document.getElementById("edit-nombrePaciente").value = paciente;
+                document.getElementById("edit-dniMedico").value = dnimedico;
+                document.getElementById("edit-nombreMedico").value = medico;
                 document.getElementById("edit-idCita").value = idCita;
-                document.getElementById("edit-fechaCita").value = cita;
+                document.getElementById("edit-fecha").value = fechacita;
                 document.getElementById("edit-tipoDocumento").value = tipo;
                 document.getElementById("edit-descripcion").value = descripcion;
                 document.getElementById("edit-fechaSubida").value = fecha;
-                document.getElementById("edit-idMedico").value = idMedico;
-                document.getElementById("edit-nombreMedico").value = medico;
-
                 document.getElementById("modalEditarDocumento").style.display = "block";
             });
         });
@@ -441,34 +448,104 @@ $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 }
             });
         });
-    }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        const modals = document.querySelectorAll(".modalAgregarDocumento, .modalEditarDocumento");
-        const closeButtons = document.querySelectorAll(".close");
-        const addButtons = document.querySelectorAll(".add-btn");
-
-        addButtons.forEach(btn => {
-            btn.addEventListener("click", function(event) {
+        pdfButtons.forEach(btn => {
+            btn.addEventListener("click", async event => {
                 event.preventDefault();
-                document.getElementById("modalAgregarDocumento").style.display = "block";
-            });
-        });
+                const idDocumento = btn.dataset.id; // Obtiene el ID del documento seleccionado
 
-        closeButtons.forEach(button => {
-            button.addEventListener("click", function() {
-                modals.forEach(modal => modal.style.display = "none");
-            });
-        });
+                try {
+                    const response = await fetch(`pdf/documento-medico.php?id=${idDocumento}`);
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
 
-        window.onclick = function(event) {
-            modals.forEach(modal => {
-                if (event.target == modal) {
-                    modal.style.display = "none";
+                    // Crear modal si no existe
+                    let modal = document.getElementById("pdfModal");
+                    if (!modal) {
+                        modal = document.createElement("div");
+                        modal.id = "pdfModal";
+                        modal.style.position = "fixed";
+                        modal.style.top = "0";
+                        modal.style.left = "0";
+                        modal.style.width = "100%";
+                        modal.style.height = "100%";
+                        modal.style.backgroundColor = "rgba(0,0,0,0.5)";
+                        modal.style.display = "flex";
+                        modal.style.justifyContent = "center";
+                        modal.style.alignItems = "center";
+                        modal.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 5px; position: relative; width: 85%; height: 90%;">
+                        <span id="closeModal" style="position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px;">✖</span>
+                        <iframe id="pdfViewer" src="" width="100%" height="95%" style="border: none; margin-top: 25px"></iframe>
+                    </div>
+                `;
+                        document.body.appendChild(modal);
+
+                        // Agregar evento de cierre
+                        document.getElementById("closeModal").addEventListener("click", () => {
+                            modal.style.display = "none";
+                            URL.revokeObjectURL(url);
+                        });
+                    }
+
+                    // Mostrar el PDF en el iframe
+                    document.getElementById("pdfViewer").src = url;
+                    modal.style.display = "flex"; // Muestra el modal
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    await Swal.fire({
+                        title: "Error",
+                        text: "Hubo un problema al cargar el documento.",
+                        icon: "error"
+                    });
                 }
             });
-        };
+        });
+
+    }
+
+    const modals = document.querySelectorAll(".modalAgregarDocumento, .modalEditarDocumento");
+    const closeButtons = document.querySelectorAll(".close");
+    const addButtons = document.querySelectorAll(".add-btn");
+
+    // Función para ocultar modales y resetear la tabla
+    function cerrarModal() {
+        modals.forEach(modal => {
+            modal.style.display = "none";
+        });
+
+        // Ocultar las tablas de citas disponibles
+        document.querySelectorAll(".tabla-container").forEach(tabla => {
+            tabla.style.display = "none";
+        });
+    }
+
+    addButtons.forEach(btn => {
+        btn.addEventListener("click", function(event) {
+            event.preventDefault();
+            document.getElementById("modalAgregarDocumento").style.display = "block";
+            document.getElementById("add-dnimedico").value = "";
+            document.getElementById("add-medico").value = "";
+            document.getElementById("add-dnipaciente").value = "";
+            document.getElementById("add-paciente").value = "";
+            document.getElementById("add-idcita").value = "";
+        });
     });
+
+    closeButtons.forEach(button => {
+        button.addEventListener("click", cerrarModal);
+    });
+
+    asignarEventosBotones();
+
+    window.onclick = function(event) {
+        modals.forEach(modal => {
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        });
+    };
 </script>
 <?php include 'alert.php'; ?>
 
