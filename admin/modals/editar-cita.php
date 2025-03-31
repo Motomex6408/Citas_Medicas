@@ -31,7 +31,7 @@
 <div id="modalEditarCita" class="modalEditarCita">
     <div class="modal-content">
         <span class="close">&times;</span>
-        <form action="php/edit-cita.php" method="POST">
+        <form id="formEditarCita" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>?action=edit_cita" method="POST" onsubmit="return enviarFormularioCita(event)">
             <div class="title">Actualizar datos de la Cita</div>
             <div class="form-group">
                 <label for="edit-idCita">ID Cita</label>
@@ -101,13 +101,77 @@
         </form>
     </div>
 </div>
+
 <script>
+    function enviarFormularioCita(event) {
+        event.preventDefault();
+        
+        const idCita = document.getElementById('edit-idCita').value;
+        if (!idCita) {
+            Swal.fire('Error', 'No se ha seleccionado una cita válida', 'error');
+            return false;
+        }
+
+        Swal.fire({
+            title: 'Actualizando cita...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const form = document.getElementById('formEditarCita');
+        const formData = new FormData(form);
+        
+        const actionUrl = '/Citas_Medicas/admin/edit-cita.php';
+
+        fetch(actionUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire({
+                icon: data.success ? 'success' : 'error',
+                title: data.success ? 'Éxito' : 'Error',
+                text: data.message || (data.success ? 'Cita actualizada' : 'Error al actualizar'),
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                if (data.success) {
+                    document.querySelector('.modalEditarCita').style.display = 'none';
+                    window.location.reload();
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                html: `<p>No se pudo conectar con el servidor</p>
+                    <p><strong>Ruta intentada:</strong> ${actionUrl}</p>
+                    <p><small>${error.message}</small></p>`,
+                confirmButtonText: 'Entendido'
+            });
+        });
+
+        return false;
+    }
+
     document.getElementById("edit-fecha").addEventListener("input", function() {
         const fecha = this.value;
         const tablaContainer = document.getElementById("tablaHorariosDisponiblesEditar");
 
         if (!fecha) {
-            // Ocultar la tabla
             tablaContainer.style.display = "none";
 
             // Limpiar los campos del médico

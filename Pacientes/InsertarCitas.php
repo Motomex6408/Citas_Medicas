@@ -1,5 +1,4 @@
 <?php
-// Configuración de cabeceras para AJAX y CORS
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
@@ -50,7 +49,7 @@ function enviarCorreo($destinatario, $asunto, $cuerpoHTML) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validación de campos requeridos
+    
     $required = ['dni', 'motivo', 'medico', 'horario', 'hora'];
     $missing = [];
     foreach ($required as $field) {
@@ -77,7 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
         $conn->beginTransaction();
 
-        // Obtener información del paciente
+        
         $stmt = $conn->prepare("
             SELECT p.idPaciente, u.nombre, u.correo 
             FROM Usuarios u
@@ -92,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception("No se encontró un paciente con el DNI proporcionado.");
         }
 
-        // Insertar la cita
+        
         $stmt = $conn->prepare("
             INSERT INTO Citas (idPaciente, idMedico, hora, motivo, estado, idHorario) 
             VALUES (:idPaciente, :idMedico, :hora, :motivo, :estado, :idHorario)
@@ -111,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $idCita = $conn->lastInsertId();
 
-        // Obtener detalles de la cita para el correo
+        
         $stmt = $conn->prepare("
             SELECT hm.fecha, c.hora, u.nombre AS medico 
             FROM Citas c
@@ -128,9 +127,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception("No se pudieron obtener los detalles de la cita.");
         }
 
-        // Preparar y enviar correo
+        
         $asunto = "Cita Médica Registrada - En espera de aprobación";
-        $hora_formateada = date("H:i", strtotime($cita['hora']));
+        $hora_formateada = date("g:i A", strtotime($cita['hora']));
         $mensaje = "
         <!DOCTYPE html>
         <html lang='es'>
