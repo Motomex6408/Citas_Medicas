@@ -1,196 +1,117 @@
 <?php
 header('Content-Type: application/json');
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type");
+require_once '../conexion.php';
 
-require_once 'session-control.php';
-include '../conexion.php';
-require '../vendor/autoload.php';
+// Recibir datos POST
+$dni = $_POST['dni'] ?? '';
+$motivo = $_POST['motivo'] ?? '';
+$id_medico = $_POST['id_medico'] ?? '';
+$id_horario = $_POST['id_horario'] ?? '';
+$horallegada = $_POST['hora_inicio'] ?? '';  // <-- Este nombre debe coincidir con JS
+$fecha = $_POST['fecha'] ?? '';
+$duracion = $_POST['duracion'] ?? 60;
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
+$transaccionIniciada = false;
 
-function enviarCorreo($destinatario, $asunto, $cuerpoHTML) {
-    $mail = new PHPMailer(true);
-    
-    try {
-        $mail->SMTPDebug = SMTP::DEBUG_OFF; 
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'medicitas25@gmail.com';
-        $mail->Password = 'thvx dbmb kcvn vhzz'; 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-        $mail->SMTPOptions = [
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'allow_self_signed' => true
-            ]
-        ];
-
-        $mail->CharSet = 'UTF-8';
-        $mail->Encoding = 'base64';
-        $mail->setFrom('medicitas25@gmail.com', 'MediCitas');
-        $mail->addAddress($destinatario);
-        $mail->isHTML(true);
-        $mail->Subject = $asunto;
-        $mail->Body = $cuerpoHTML;
-        $mail->AltBody = strip_tags($cuerpoHTML);
-        
-        return $mail->send();
-    } catch (Exception $e) {
-        error_log("Error al enviar correo: " . $e->getMessage());
-        return false;
-    }
-}
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    $required = ['dni', 'motivo', 'medico', 'horario', 'hora'];
-    $missing = [];
-    foreach ($required as $field) {
-        if (empty($_POST[$field])) {
-            $missing[] = $field;
-        }
-    }
-    
-    if (!empty($missing)) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => "Faltan campos requeridos: " . implode(", ", $missing)
-        ]);
-        exit;
+try {
+    // Validar parámetros obligatorios
+    if (empty($dni) || empty($motivo) || empty($id_medico) || empty($id_horario) || empty($horallegada) || empty($fecha)) {
+        throw new Exception('Parámetros requeridos faltantes. INSERT');
     }
 
-    $dni = $_POST["dni"];
-    $motivo = trim($_POST["motivo"]);
-    $idMedico = $_POST["medico"];
-    $idHorario = $_POST["horario"];
-    $hora = $_POST["hora"];
-    $estado = "pendiente";
-
-    try {
-        $conn->beginTransaction();
-
-        
-        $stmt = $conn->prepare("
-            SELECT p.idPaciente, u.nombre, u.correo 
-            FROM Usuarios u
-            JOIN Pacientes p ON u.idUsuario = p.idUsuario
-            WHERE u.dni = :dni
-        ");
-        $stmt->bindParam(':dni', $dni);
-        $stmt->execute();
-        $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$paciente) {
-            throw new Exception("No se encontró un paciente con el DNI proporcionado.");
-        }
-
-        
-        $stmt = $conn->prepare("
-            INSERT INTO Citas (idPaciente, idMedico, hora, motivo, estado, idHorario) 
-            VALUES (:idPaciente, :idMedico, :hora, :motivo, :estado, :idHorario)
-        ");
-        
-        $stmt->bindParam(':idPaciente', $paciente['idPaciente']);
-        $stmt->bindParam(':idMedico', $idMedico);
-        $stmt->bindParam(':hora', $hora);
-        $stmt->bindParam(':motivo', $motivo);
-        $stmt->bindParam(':estado', $estado);
-        $stmt->bindParam(':idHorario', $idHorario);
-        
-        if (!$stmt->execute()) {
-            throw new Exception("Error al insertar la cita.");
-        }
-
-        $idCita = $conn->lastInsertId();
-
-        
-        $stmt = $conn->prepare("
-            SELECT hm.fecha, c.hora, u.nombre AS medico 
-            FROM Citas c
-            JOIN HorariosMedicos hm ON c.idHorario = hm.idHorario
-            JOIN Medicos m ON c.idMedico = m.idMedico
-            JOIN Usuarios u ON m.idUsuario = u.idUsuario
-            WHERE c.idCita = :idCita
-        ");
-        $stmt->bindParam(':idCita', $idCita);
-        $stmt->execute();
-        $cita = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$cita) {
-            throw new Exception("No se pudieron obtener los detalles de la cita.");
-        }
-
-        
-        $asunto = "Cita Médica Registrada - En espera de aprobación";
-        $hora_formateada = date("g:i A", strtotime($cita['hora']));
-        $mensaje = "
-        <!DOCTYPE html>
-        <html lang='es'>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <title>Cita Médica Registrada</title>
-            <style>
-                body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-                .container { max-width: 600px; background: white; padding: 20px; margin: auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-                .header { background-color: #2c8dfb; color: white; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px 8px 0 0; }
-                .content { text-align: left; padding: 20px; }
-                .details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
-                .highlight { color: #2c8dfb; font-weight: bold; }
-                .footer { font-size: 14px; color: #555; margin-top: 20px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>Cita Médica Registrada</div>
-                <div class='content'>
-                    <p>¡Hola <span class='highlight'>{$paciente['nombre']}</span>!</p>
-                    <p>Hemos recibido tu solicitud de cita médica con los siguientes detalles:</p>
-                    <div class='details'>
-                        <p><strong>Fecha:</strong> {$cita['fecha']}</p>
-                        <p><strong>Hora:</strong> {$hora_formateada}</p>
-                        <p><strong>Médico:</strong> Dr. {$cita['medico']}</p>
-                    </div>
-                    <p><em>Actualmente, tu cita está en espera de aprobación.</em></p>
-                    <p class='footer'>Gracias por confiar en nosotros,<br><strong>El equipo de MediCitas</strong></p>
-                </div>
-            </div>
-        </body>
-        </html>";
-
-        $envioExitoso = enviarCorreo($paciente['correo'], $asunto, $mensaje);
-
-        $conn->commit();
-        
-        echo json_encode([
-            'status' => 'success',
-            'message' => $envioExitoso 
-                ? 'Cita registrada correctamente. Se ha enviado un correo de confirmación.'
-                : 'Cita registrada, pero no se pudo enviar el correo de confirmación.'
-        ]);
-        exit;
-
-    } catch (Exception $e) {
-        $conn->rollBack();
-        
-        error_log("Error en InsertarCitas.php: " . $e->getMessage());
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Hubo un error al confirmar la cita: ' . $e->getMessage()
-        ]);
-        exit;
+    // Validar formato de DNI
+    if (!preg_match('/^\d{8,13}$/', $dni)) {
+        throw new Exception('DNI inválido. Debe contener entre 8 y 13 dígitos.');
     }
-} else {
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Método no permitido'
+
+    // Validar duración
+    $duracion = is_numeric($duracion) ? (int)$duracion : 60;
+    if ($duracion <= 0) {
+        throw new Exception('Duración inválida.');
+    }
+
+    // Validar fecha
+    if (!DateTime::createFromFormat('Y-m-d', $fecha)) {
+        throw new Exception('Formato de fecha inválido.');
+    }
+
+    // Iniciar transacción
+    $conn->beginTransaction();
+    $transaccionIniciada = true;
+
+    // Obtener ID del paciente
+    $stmt = $conn->prepare("SELECT T1.idPaciente 
+                            FROM Pacientes T1
+                            INNER JOIN Usuarios T2 ON T2.idUsuario = T1.idUsuario
+                            WHERE T2.dni = ?");
+    $stmt->execute([$dni]);
+    $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$paciente) {
+        throw new Exception("No se encontró el paciente con DNI proporcionado.");
+    }
+
+    $id_paciente = $paciente['idPaciente'];
+
+    // Verificar disponibilidad nuevamente (evitar condiciones de carrera)
+    $stmt = $conn->prepare("
+            SELECT 1 FROM HorariosMedicos WITH (UPDLOCK, ROWLOCK)
+            WHERE idHorario = ? 
+            AND (cupos IS NULL OR cupos > 0)
+            ");
+    $stmt->execute([$id_horario]);
+    if (!$stmt->fetch()) {
+        throw new Exception("El horario seleccionado ya no está disponible.");
+    }
+
+    $stmt->execute([$id_horario]);
+    if (!$stmt->fetch()) {
+        throw new Exception("El horario seleccionado ya no está disponible.");
+    }
+
+    // Insertar cita
+    $stmt = $conn->prepare("
+        INSERT INTO Citas (idPaciente, idMedico, hora, motivo, estado, idHorario, duracion)
+        VALUES (?, ?, ?, ?, 'Pendiente', ?, ?)
+    ");
+    $stmt->execute([
+        $id_paciente,
+        $id_medico,
+        $horallegada,
+        $motivo,
+        $id_horario,
+        $duracion
     ]);
-    exit;
+
+    // Actualizar cupos
+    $stmt = $conn->prepare("
+        UPDATE HorariosMedicos 
+        SET cupos = GREATEST(cupos - 1, 0) 
+        WHERE idHorario = ? AND (cupos IS NOT NULL)
+    ");
+    $stmt->execute([$id_horario]);
+
+    $conn->commit();
+
+    echo json_encode([
+        'estado' => 'exito',
+        'mensaje' => 'Cita registrada correctamente.'
+    ]);
+} catch (PDOException $e) {
+    if ($transaccionIniciada) {
+        $conn->rollBack();
+    }
+    error_log('Error al registrar cita (PDO): ' . $e->getMessage());
+    echo json_encode([
+        'estado' => 'error',
+        'mensaje' => 'Error al registrar cita: ' . $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    if ($transaccionIniciada) {
+        $conn->rollBack();
+    }
+    echo json_encode([
+        'estado' => 'error',
+        'mensaje' => $e->getMessage()
+    ]);
 }

@@ -23,18 +23,17 @@ if (isset($_POST['fecha']) && isset($_POST['especialidad'])) {
         h.idHorario, 
         CONVERT(VARCHAR(5), h.horaInicio, 108) AS horaInicio, 
         CONVERT(VARCHAR(5), h.horaFin, 108) AS horaFin, 
-        b.nombre AS nombreMedico,
-        b.apellido AS apellidoMedico,
+        CONCAT(b.nombre, ' ', b.apellido) AS nombreMedico,
         u.idMedico
     FROM HorariosMedicos h
     JOIN Medicos u ON h.idMedico = u.idMedico
     JOIN Usuarios b ON b.idUsuario = u.idUsuario
     JOIN Especialidades e ON e.idEspecialidad = u.idEspecialidad
-    WHERE h.diaSemana = :diaSemana AND e.nombreEspecialidad = :especialidad
+    WHERE h.fecha = :fecha AND e.nombreEspecialidad = :especialidad
     ";
 
     $consulta = $conn->prepare($sql);
-    $consulta->bindParam(':diaSemana', $diaSemana);
+    $consulta->bindParam(':fecha', $fecha);
     $consulta->bindParam(':especialidad', $especialidad);
     $consulta->execute();
 
@@ -46,14 +45,15 @@ if (isset($_POST['fecha']) && isset($_POST['especialidad'])) {
             $horaFin = date("H:i", strtotime($horario['horaFin']));
 
             echo "<tr>
-                    <td>" . $horario['horaInicio'] . "</td>
-                    <td>" . $horario['horaFin'] . "</td>
-                    <td>" . $horario['nombreMedico'] . " " . $horario['apellidoMedico'] . "</td>
+                    <td>" . $horario['horaInicio'] . " - " . $horario['horaFin'] . "</td>
+                    <td>" . 60 . " minutos</td>
+                    <td>" . $horario['nombreMedico'] . "</td>
                     <td>
-                        <button class='btn-horario' 
-                                data-horario='" . $horario['idHorario'] . "' 
-                                data-medico='" . $horario['idMedico'] . "' 
-                                data-hora='" . $horaInicio . "'>
+                        <button class='btn-reservar' 
+                                data-idhorario='" . $horario['idHorario'] . "' 
+                                data-idmedico='" . $horario['idMedico'] . "'
+                                data-nombremedico='" . $horario['nombreMedico'] . "' 
+                                data-hora-inicio='" . $horaInicio . "'>
                             Seleccionar
                         </button>
                     </td>
@@ -63,4 +63,3 @@ if (isset($_POST['fecha']) && isset($_POST['especialidad'])) {
         echo "<tr><td colspan='4'>No hay horarios disponibles para esta fecha.</td></tr>";
     }
 }
-?>

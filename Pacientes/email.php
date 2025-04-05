@@ -1,6 +1,6 @@
 <?php
 use PHPMailer\PHPMailer\PHPMailer;
-require 'vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 function enviarEmail($destinatario, $asunto, $cuerpoHTML) {
     $mail = new PHPMailer(true);

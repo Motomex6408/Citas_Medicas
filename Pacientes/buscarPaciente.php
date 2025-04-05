@@ -15,4 +15,3 @@ if (isset($_POST['dni'])) {
         echo json_encode(["success" => false]);
     }
 }
-?>

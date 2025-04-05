@@ -33,3 +33,5 @@
 --03/04/2025--Tabla Auditoria es ahora completamente funcional y se puede visualizar desde el modulo de Administrador en la pestaña "Auditoria", ademas las funcionalidades del correo ahora tambien estan disponibles en el modulo de Medicos.
 
 --- 04/04/2025 --- Se desarrolla en el modulo de pacientes la seccion para la reserva de citas, donde se implementan las primeras secciones de codigo necesarias para la insercion de reserva de citas, todavia en desarrollo. Se corrigen algunos errores que impedian el funcionamiento correcto para verificar la disponibilidad del horario medico y al Insertar Citas, incluye correccion de algunas consultas y parametros mal definidos.
+
+--- 05/04/2025 --- Correccion de errores al exportar reportes en el modulo de medicos y mejoras en las pantallas de inicio para Medicos y Administrador. Funcion de recuperar contraseña disponible.
