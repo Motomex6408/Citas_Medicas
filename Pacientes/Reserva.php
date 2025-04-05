@@ -172,8 +172,7 @@ $(document).ready(function() {
             }
         });
     }
-
-    
+  
     $(document).on('click', '.btn-horario', function() {
         $('.btn-horario').removeClass('selected');
         $(this).addClass('selected');
@@ -189,7 +188,7 @@ $(document).ready(function() {
    
     function resetearProcesoReserva() {
         $('#cita-container').fadeOut(300, function() {
-            $('.table-container').fadeIn(300);
+        $('.table-container').fadeIn(300);
         });
         $('#fecha-cita').val('');
         $('#horarios-list').empty();

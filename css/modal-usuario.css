@@ -14,7 +14,8 @@
 .modalAgregarEspecialidad, .modalEditarEspecialidad,
 .modalAgregarCita, .modalEditarCita,
 .modalAgregarHorario, .modalEditarHorario,
-.modalAgregarDocumento, .modalEditarDocumento {
+.modalAgregarDocumento, .modalEditarDocumento,
+.modalAgregarPago, .modalEditarPago {
     display: none; /* Oculto por defecto */
     position: fixed;
     z-index: 1000;
@@ -70,7 +71,7 @@ form .title {
     align-items: start;
 }
 
-#camposUsuario, #camposTutor, #camposNino {
+#camposUsuario, #camposTutor, #camposTutorEditar, #camposNino {
     display: contents; /* Mantiene la estructura grid del padre */
 }
 

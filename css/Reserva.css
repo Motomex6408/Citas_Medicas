@@ -3,6 +3,44 @@ body {
   background: #f4f4f4;
 }
 
+.form-group {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: start;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+}
+
+.btn-aceptar {
+  width: 100%;
+  padding: 10px;
+  font-size: 18px;
+  color: #fff;
+  background-color: #16a8e2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
 .table-container {
   background: white;
   padding: 20px;

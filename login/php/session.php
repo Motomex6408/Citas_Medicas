@@ -24,15 +24,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'usuario' => $usuario,
                     'nombre' => $resultset['nombre'],
                     'apellido' => $resultset['apellido'],
-                    'rol' => $resultset['rol']
+                    'rol' => $resultset['rol'],
+                    'idusuario' => $resultset['idUsuario'],
+                    'dni' => $resultset['dni'],
                 ];
 
                 if($resultset['rol'] == 'Administrador') {
-                    header('Location: ../../admin/medicos.php');
+                    header('Location: ../../admin/');
                 } else if($resultset['rol'] == 'Médico') {       
                     header('Location: ../../medicos/');
                 } else if($resultset['rol'] == 'Paciente') {
-                    header('Location: ../../Pacientes/index.php');
+                    header('Location: ../../pacientes/');
                 }
             } else {
                 $_SESSION['error'] = "Usuario o contraseña incorrectos.";

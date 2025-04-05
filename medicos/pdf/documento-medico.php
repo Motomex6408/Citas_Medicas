@@ -60,7 +60,7 @@ $html = '
     </style>
 </head>
 <body>
-<img src="http://localhost/SistemaWebI/img/logo-medicitas.png" alt="Logo" style="display: block; margin: 0 auto; width: 200px;">
+<img src="http://localhost/CitasMedicas/img/logo-medicitas.png" alt="Logo" style="display: block; margin: 0 auto; width: 200px;">
 
 <div class="header">Clínica Médica MediCitas</div>
 <div class="sub-header">'. $documento['tipoDocumento'] .' Médica</div>
